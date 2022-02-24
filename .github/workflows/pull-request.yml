@@ -1,0 +1,19 @@
+name: Create RC PR on merge to main
+on:
+  push:
+    branches-ignore:
+      - staging
+      - launchpad
+      - production
+jobs:
+  auto-pull-request:
+    name: PullRequestAction
+    runs-on: ubuntu-latest
+    steps:
+      - name: pull-request-action
+        uses: vsoch/pull-request-action@1.0.19
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_PREFIX: "main"
+          PULL_REQUEST_BRANCH: "release-candidate"
+          PULL_REQUEST_FROM_BRANCH: "main"
