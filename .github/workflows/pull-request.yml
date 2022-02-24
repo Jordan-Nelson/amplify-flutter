@@ -15,5 +15,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH_PREFIX: "main"
-          PULL_REQUEST_BRANCH: "release-candidate"
+          PULL_REQUEST_BRANCH: "release-candidate-test"
           PULL_REQUEST_FROM_BRANCH: "main"
