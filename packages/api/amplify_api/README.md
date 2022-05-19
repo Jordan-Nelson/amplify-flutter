@@ -69,3 +69,5 @@ Future<void> subscribe() async {
   subscription.cancel();
 }
 ```
+
+TEST: test fix commit in API
