@@ -35,4 +35,4 @@ jobs:
             sigv4
             storage
 
-## Test 3: good scope
+## Test 3: bad scope
