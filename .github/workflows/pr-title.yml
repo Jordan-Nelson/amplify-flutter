@@ -15,22 +15,22 @@ jobs:
       - uses: amannn/action-semantic-pull-request@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          # Configure which types are allowed.
-          # Default: https://github.com/commitizen/conventional-commit-types
-          types: |
-            fix
-            feat
-            chore
-          # Configure which scopes are allowed.
-          scopes: |
-            amplify
-            authenticator
-            core
-            datastore
-            analytics
-            api
-            auth
-            common
-            sigv4
-            storage
+        # with:
+        #   # Configure which types are allowed.
+        #   # Default: https://github.com/commitizen/conventional-commit-types
+        #   types: |
+        #     fix
+        #     feat
+        #     chore
+        #   # Configure which scopes are allowed.
+        #   scopes: |
+        #     amplify
+        #     authenticator
+        #     core
+        #     datastore
+        #     analytics
+        #     api
+        #     auth
+        #     common
+        #     sigv4
+        #     storage
