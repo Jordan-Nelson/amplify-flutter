@@ -10,6 +10,6 @@ build/
 pubspec.lock
 
 # JS outputs
-*.js
-*.js.map
-*.js.deps
+# *.js
+# *.js.map
+# *.js.deps
