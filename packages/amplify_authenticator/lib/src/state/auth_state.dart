@@ -16,6 +16,7 @@
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_authenticator/src/enums/authenticator_step.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 abstract class AuthState {
   const AuthState();
@@ -28,7 +29,19 @@ class LoadingState extends AuthState {
 }
 
 class AuthenticatedState extends AuthState {
-  const AuthenticatedState();
+  const AuthenticatedState({
+    this.context,
+    this.initialRoute = false,
+  });
+
+  /// The [BuildContext] that this event originated from.
+  ///
+  /// Will be null if the event originates from outside
+  /// the authenticator. For example, by calling `Amplify.Auth.SignIn()`
+  /// directly.
+  final BuildContext? context;
+
+  final bool initialRoute;
 }
 
 @immutable

@@ -124,7 +124,7 @@ class SocialSignInButton extends AuthenticatorButton<SocialSignInButton> {
 
   @override
   void onPressed(BuildContext context, AuthenticatorState state) {
-    state.signInWithProvider(provider);
+    state.signInWithProvider(provider, context);
   }
 
   @override
@@ -214,7 +214,7 @@ class _SocialSignInButtonState
         ),
         onPressed: state.isBusy
             ? null
-            : () => state.signInWithProvider(widget.provider),
+            : () => state.signInWithProvider(widget.provider, context),
         child: LayoutBuilder(builder: (context, constraints) {
           final padding = calculatePadding(constraints);
           return Padding(

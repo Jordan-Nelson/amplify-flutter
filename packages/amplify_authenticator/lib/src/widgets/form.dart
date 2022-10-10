@@ -18,7 +18,6 @@ library authenticator.form;
 import 'package:amplify_authenticator/amplify_authenticator.dart';
 import 'package:amplify_authenticator/src/enums/enums.dart';
 import 'package:amplify_authenticator/src/mixins/authenticator_username_field.dart';
-import 'package:amplify_authenticator/src/state/inherited_authenticator_state.dart';
 import 'package:amplify_authenticator/src/state/inherited_config.dart';
 import 'package:amplify_authenticator/src/utils/list.dart';
 import 'package:amplify_authenticator/src/widgets/component.dart';
@@ -27,6 +26,31 @@ import 'package:amplify_authenticator/src/widgets/social/social_button.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+final signUpFormKey = GlobalKey<FormState>(debugLabel: 'signUpFormKey');
+final signInFormKey = GlobalKey<FormState>(debugLabel: 'signInFormKey');
+final confirmSignUpFormKey = GlobalKey<FormState>(
+  debugLabel: 'confirmSignUpFormKey',
+);
+final resetPasswordFormKey = GlobalKey<FormState>(
+  debugLabel: 'resetPasswordFormKey',
+);
+final confirmResetPasswordFormKey = GlobalKey<FormState>(
+  debugLabel: 'confirmResetPasswordFormKey',
+);
+final confirmSignInMFAFormKey = GlobalKey<FormState>(
+  debugLabel: 'confirmSignInMFAFormKey',
+);
+final confirmSignInNewPasswordFormKey = GlobalKey<FormState>(
+  debugLabel: 'confirmSignInNewPasswordFormKey',
+);
+final confirmSignInCustomAuthFormKey = GlobalKey<FormState>(
+  debugLabel: 'confirmSignInCustomAuthFormKey',
+);
+final verifyUserFormKey = GlobalKey<FormState>(debugLabel: 'verifyUserFormKey');
+final confirmVerifyUserFormKey = GlobalKey<FormState>(
+  debugLabel: 'confirmVerifyUserFormKey',
+);
 
 /// Base class for Authenticator forms and ancestor of all Authenticator
 /// form fields.
@@ -73,6 +97,7 @@ class AuthenticatorForm extends AuthenticatorComponent<AuthenticatorForm> {
   const AuthenticatorForm({
     Key? key,
     required this.child,
+    required this.formKey,
   })  : fields = const [],
         actions = const [],
         includeDefaultSocialProviders = false,
@@ -80,11 +105,15 @@ class AuthenticatorForm extends AuthenticatorComponent<AuthenticatorForm> {
 
   const AuthenticatorForm._({
     Key? key,
+    required this.formKey,
     required this.fields,
     required this.actions,
     this.includeDefaultSocialProviders = true,
   })  : child = null,
         super(key: key);
+
+  /// The key for the current form.
+  final GlobalKey<FormState> formKey;
 
   /// The form fields which are independent of the Auth plugin configuration.
   final List<AuthenticatorFormField> fields;
@@ -171,17 +200,16 @@ class AuthenticatorFormState<T extends AuthenticatorForm>
 
   @override
   Widget build(BuildContext context) {
-    final formKey = InheritedAuthenticatorState.of(context).formKey;
     if (widget.child != null) {
       return Form(
-        key: formKey,
+        key: widget.formKey,
         child: widget.child!,
       );
     }
 
     final runtimeActions = this.runtimeActions(context);
     return Form(
-      key: formKey,
+      key: widget.formKey,
       child: Column(
         children: [
           ...allFields,
@@ -221,6 +249,7 @@ class SignUpForm extends AuthenticatorForm {
   })  : _includeDefaultFields = true,
         super._(
           key: key,
+          formKey: signUpFormKey,
           fields: [
             SignUpFormField.username(),
             SignUpFormField.password(),
@@ -232,12 +261,13 @@ class SignUpForm extends AuthenticatorForm {
         );
 
   /// A custom Sign Up form.
-  const SignUpForm.custom({
+  SignUpForm.custom({
     Key? key,
     required List<SignUpFormField> fields,
   })  : _includeDefaultFields = false,
         super._(
           key: key,
+          formKey: signUpFormKey,
           fields: fields,
           actions: const [
             SignUpButton(),
@@ -373,6 +403,7 @@ class SignInForm extends AuthenticatorForm {
     bool includeDefaultSocialProviders = true,
   }) : super._(
           key: key,
+          formKey: signInFormKey,
           fields: [
             SignInFormField.username(),
             SignInFormField.password(),
@@ -385,12 +416,13 @@ class SignInForm extends AuthenticatorForm {
         );
 
   /// A custom Sign In form.
-  const SignInForm.custom({
+  SignInForm.custom({
     Key? key,
     required List<SignInFormField> fields,
     bool includeDefaultSocialProviders = true,
   }) : super._(
           key: key,
+          formKey: signInFormKey,
           fields: fields,
           actions: const [
             SignInButton(),
@@ -465,6 +497,7 @@ class ConfirmSignUpForm extends AuthenticatorForm {
   })  : resendCodeButton = null,
         super._(
           key: key,
+          formKey: confirmSignUpFormKey,
           fields: [
             ConfirmSignUpFormField.username(),
             ConfirmSignUpFormField.verificationCode(),
@@ -476,12 +509,13 @@ class ConfirmSignUpForm extends AuthenticatorForm {
         );
 
   /// A custom Confirm Sign Up form.
-  const ConfirmSignUpForm.custom({
+  ConfirmSignUpForm.custom({
     Key? key,
     required List<ConfirmSignUpFormField> fields,
     this.resendCodeButton,
   }) : super._(
           key: key,
+          formKey: confirmSignUpFormKey,
           fields: fields,
           actions: const [
             ConfirmSignUpButton(),
@@ -508,6 +542,7 @@ class ConfirmSignInCustomAuthForm extends AuthenticatorForm {
   ConfirmSignInCustomAuthForm({Key? key})
       : super._(
           key: key,
+          formKey: confirmSignInCustomAuthFormKey,
           fields: [
             ConfirmSignInFormField.customChallenge(),
           ],
@@ -533,6 +568,7 @@ class ConfirmSignInMFAForm extends AuthenticatorForm {
   ConfirmSignInMFAForm({Key? key})
       : super._(
           key: key,
+          formKey: confirmSignInMFAFormKey,
           fields: [
             ConfirmSignInFormField.verificationCode(),
           ],
@@ -559,6 +595,7 @@ class ConfirmSignInNewPasswordForm extends AuthenticatorForm {
     Key? key,
   }) : super._(
           key: key,
+          formKey: confirmSignInNewPasswordFormKey,
           fields: [
             ConfirmSignInFormField.newPassword(),
             ConfirmSignInFormField.confirmNewPassword(),
@@ -570,11 +607,12 @@ class ConfirmSignInNewPasswordForm extends AuthenticatorForm {
         );
 
   /// A custom Confirm Sign In with New Password form.
-  const ConfirmSignInNewPasswordForm.custom({
+  ConfirmSignInNewPasswordForm.custom({
     Key? key,
     required List<ConfirmSignInFormField> fields,
   }) : super._(
           key: key,
+          formKey: confirmSignInNewPasswordFormKey,
           fields: fields,
           actions: const [
             ConfirmSignInNewPasswordButton(),
@@ -597,6 +635,7 @@ class ResetPasswordForm extends AuthenticatorForm {
     Key? key,
   }) : super._(
           key: key,
+          formKey: resetPasswordFormKey,
           fields: [
             SignInFormField.username(),
           ],
@@ -617,10 +656,11 @@ class ResetPasswordForm extends AuthenticatorForm {
 /// {@endtemplate}
 class ConfirmResetPasswordForm extends AuthenticatorForm {
   /// {@macro amplify_authenticator.reset_password_form}
-  const ConfirmResetPasswordForm({
+  ConfirmResetPasswordForm({
     Key? key,
   }) : super._(
           key: key,
+          formKey: confirmResetPasswordFormKey,
           fields: const [
             ResetPasswordFormField.verificationCode(),
             ResetPasswordFormField.newPassword(),
@@ -647,6 +687,7 @@ class VerifyUserForm extends AuthenticatorForm {
     Key? key,
   }) : super._(
           key: key,
+          formKey: verifyUserFormKey,
           fields: [
             VerifyUserFormField.verifyAttribute(),
           ],
@@ -671,6 +712,7 @@ class ConfirmVerifyUserForm extends AuthenticatorForm {
     Key? key,
   }) : super._(
           key: key,
+          formKey: confirmVerifyUserFormKey,
           fields: [
             VerifyUserFormField.confirmVerifyAttribute(),
           ],

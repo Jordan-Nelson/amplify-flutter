@@ -22,6 +22,7 @@ import 'package:amplify_authenticator/src/services/amplify_auth_service.dart';
 import 'package:amplify_authenticator/src/state/auth_state.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:async/async.dart';
+import 'package:flutter/widgets.dart';
 import 'package:stream_transform/stream_transform.dart';
 
 part 'auth_event.dart';
@@ -108,7 +109,7 @@ class StateMachineBloc
 
   Stream<AuthState> _eventTransformer(AuthEvent event) async* {
     if (event is AuthLoad) {
-      yield* _authLoad();
+      yield* _authLoad(event.data);
     } else if (event is AuthSignIn) {
       yield* _signIn(event.data);
     } else if (event is AuthSignUp) {
@@ -116,23 +117,23 @@ class StateMachineBloc
     } else if (event is AuthConfirmSignUp) {
       yield* _confirmSignUp(event.data);
     } else if (event is AuthChangeScreen) {
-      yield* _changeScreen(event.step);
+      yield* _changeScreen(event.data);
     } else if (event is AuthSignOut) {
-      yield* _signOut();
+      yield* _signOut(event.data);
     } else if (event is AuthResetPassword) {
       yield* _resetPassword(event.data);
     } else if (event is AuthConfirmResetPassword) {
       yield* _confirmResetPassword(event.data);
     } else if (event is AuthConfirmSignIn) {
-      yield* _confirmSignIn(event.data, event.rememberDevice);
+      yield* _confirmSignIn(event.data);
     } else if (event is AuthVerifyUser) {
       yield* _verifyUser(event.data);
     } else if (event is AuthConfirmVerifyUser) {
       yield* _confirmVerifyUser(event.data);
     } else if (event is AuthSkipVerifyUser) {
-      yield const AuthenticatedState();
+      yield AuthenticatedState(context: event.data.context);
     } else if (event is AuthResendSignUpCode) {
-      yield* _resendSignUpCode(event.username);
+      yield* _resendSignUpCode(event.data);
     }
   }
 
@@ -161,45 +162,54 @@ class StateMachineBloc
     return null;
   }
 
-  Stream<AuthState> _authLoad() async* {
+  Stream<AuthState> _authLoad(AuthLoadData data) async* {
     yield const LoadingState();
     await Amplify.asyncConfig;
-    yield* _isValidSession();
+    yield* _isValidSession(context: data.context);
     // Emit empty event to resolve bug with broken event handling on web (possible DDC issue)
     // TODO: investigate broken event handling
     yield* const Stream.empty();
   }
 
-  Stream<AuthState> _isValidSession() async* {
+  Stream<AuthState> _isValidSession({required BuildContext context}) async* {
     try {
       bool isValidSession = await _authService.isValidSession();
       if (isValidSession) {
-        yield const AuthenticatedState();
+        yield AuthenticatedState(context: context, initialRoute: true);
       } else {
         /// [isValidSession] returns false if the native platform
         /// returns a [SignedOutException] or if the native libraries return a session object but
         /// UserPool tokens are null (when unauthenticated access is enabled on Identity Pool).
-        yield* _changeScreen(initialStep);
+        final authChangeScreenData = AuthChangeScreenData(
+          context: context,
+          step: initialStep,
+        );
+        yield* _changeScreen(authChangeScreenData);
       }
     } on SessionExpiredException {
       /// In this case, we want to give the end user an exception message and go to sign in.
       _exceptionController.add(AuthenticatorException(
           'Your session has expired. Please sign in.',
           showBanner: true));
-      yield* _changeScreen(initialStep);
+      final authChangeScreenData = AuthChangeScreenData(
+        context: context,
+        step: initialStep,
+      );
+      yield* _changeScreen(authChangeScreenData);
 
       /// On [AmplifyException] and [Exception], update exception controller, do not show banner
       /// and go to sign in step.
     } on Exception catch (e) {
       _exceptionController.add(AuthenticatorException(e, showBanner: false));
-      yield* _changeScreen(initialStep);
+      final authChangeScreenData = AuthChangeScreenData(
+        context: context,
+        step: initialStep,
+      );
+      yield* _changeScreen(authChangeScreenData);
     }
   }
 
-  Stream<AuthState> _confirmSignIn(
-    AuthConfirmSignInData data,
-    bool rememberDevice,
-  ) async* {
+  Stream<AuthState> _confirmSignIn(AuthConfirmSignInData data) async* {
     try {
       var result = await _authService.confirmSignIn(
         confirmationValue: data.confirmationValue,
@@ -226,7 +236,7 @@ class StateMachineBloc
           yield UnauthenticatedState.confirmSignUp;
           break;
         case 'DONE':
-          if (rememberDevice) {
+          if (data.rememberDevice) {
             try {
               await _authService.rememberDevice();
             } on Exception catch (e) {
@@ -235,7 +245,7 @@ class StateMachineBloc
               );
             }
           }
-          yield* _checkUserVerification();
+          yield* _checkUserVerification(context: data.context);
           break;
         default:
           break;
@@ -249,7 +259,11 @@ class StateMachineBloc
         'The value provided was incorrect. You cannot be signed in. Please try again.',
         showBanner: true,
       ));
-      yield* _changeScreen(initialStep);
+      final authChangeScreenData = AuthChangeScreenData(
+        context: data.context,
+        step: initialStep,
+      );
+      yield* _changeScreen(authChangeScreenData);
     } on Exception catch (e) {
       _exceptionController.add(AuthenticatorException(e));
     }
@@ -264,9 +278,10 @@ class StateMachineBloc
         data.confirmationCode,
         data.newPassword,
       );
-      var authSignInData = AuthUsernamePasswordSignInData(
+      final authSignInData = AuthUsernamePasswordSignInData(
         username: data.username,
         password: data.newPassword,
+        context: data.context,
       );
       yield* _signIn(authSignInData);
     } on Exception catch (e) {
@@ -291,6 +306,7 @@ class StateMachineBloc
   Future<void> _processSignInResult(
     SignInResult result, {
     required bool isSocialSignIn,
+    required BuildContext context,
   }) async {
     switch (result.nextStep!.signInStep) {
       case 'CONFIRM_SIGN_IN_WITH_SMS_MFA_CODE':
@@ -315,9 +331,9 @@ class StateMachineBloc
         break;
       case 'DONE':
         if (isSocialSignIn) {
-          _emit(const AuthenticatedState());
+          _emit(AuthenticatedState(context: context));
         } else {
-          await for (final state in _checkUserVerification()) {
+          await for (final state in _checkUserVerification(context: context)) {
             _emit(state);
           }
         }
@@ -339,7 +355,11 @@ class StateMachineBloc
           data.username,
           data.password,
         );
-        await _processSignInResult(result, isSocialSignIn: false);
+        await _processSignInResult(
+          result,
+          isSocialSignIn: false,
+          context: data.context,
+        );
       } else if (data is AuthSocialSignInData) {
         // Do not await a social sign-in since multiple sign-in attempts
         // can occur.
@@ -349,7 +369,11 @@ class StateMachineBloc
               preferPrivateSession: preferPrivateSession,
             )
             .then(
-              (result) => _processSignInResult(result, isSocialSignIn: true),
+              (result) => _processSignInResult(
+                result,
+                isSocialSignIn: true,
+                context: data.context,
+              ),
             )
             .onError<Exception>((error, stackTrace) {
           final log =
@@ -366,7 +390,11 @@ class StateMachineBloc
       ));
       yield UnauthenticatedState.confirmSignUp;
       if (data is AuthUsernamePasswordSignInData) {
-        yield* _resendSignUpCode(data.username);
+        final resendSignUpCodeData = AuthResendSignUpCodeData(
+          username: data.username,
+          context: data.context,
+        );
+        yield* _resendSignUpCode(resendSignUpCodeData);
       } else {
         // TODO: Is this possible?
       }
@@ -380,7 +408,9 @@ class StateMachineBloc
     yield* const Stream.empty();
   }
 
-  Stream<AuthState> _checkUserVerification() async* {
+  Stream<AuthState> _checkUserVerification({
+    required BuildContext context,
+  }) async* {
     if (currentState is UnauthenticatedState) {
       final state = (currentState as UnauthenticatedState);
       _emit(PendingVerificationCheckState(step: state.step));
@@ -395,11 +425,11 @@ class StateMachineBloc
       if (verifiedAttributes.isEmpty && unverifiedAttributes.isNotEmpty) {
         yield VerifyUserFlow(unverifiedAttributeKeys: unverifiedAttributes);
       } else {
-        yield const AuthenticatedState();
+        yield AuthenticatedState(context: context);
       }
     } on Exception catch (e) {
       _exceptionController.add(AuthenticatorException(e, showBanner: false));
-      yield const AuthenticatedState();
+      yield AuthenticatedState(context: context);
     }
   }
 
@@ -418,9 +448,9 @@ class StateMachineBloc
           break;
         case 'DONE':
           var authSignInData = AuthUsernamePasswordSignInData(
-            username: data.username,
-            password: data.password,
-          );
+              username: data.username,
+              password: data.password,
+              context: data.context);
 
           yield* _signIn(authSignInData);
           break;
@@ -436,9 +466,9 @@ class StateMachineBloc
     try {
       await _authService.confirmSignUp(data.username, data.code);
       var authSignInData = AuthUsernamePasswordSignInData(
-        username: data.username,
-        password: data.password,
-      );
+          username: data.username,
+          password: data.password,
+          context: data.context);
 
       yield* _signIn(authSignInData);
     } on Exception catch (e) {
@@ -448,10 +478,14 @@ class StateMachineBloc
     yield* const Stream.empty();
   }
 
-  Stream<AuthState> _signOut() async* {
+  Stream<AuthState> _signOut(AuthData data) async* {
     try {
       await _authService.signOut();
-      yield* _changeScreen(AuthenticatorStep.signIn);
+      final authChangeScreenData = AuthChangeScreenData(
+        context: data.context,
+        step: AuthenticatorStep.signIn,
+      );
+      yield* _changeScreen(authChangeScreenData);
     } on Exception catch (e) {
       _exceptionController.add(AuthenticatorException(e));
     }
@@ -480,7 +514,7 @@ class StateMachineBloc
         userAttributeKey: data.userAttributeKey,
         confirmationCode: data.code,
       );
-      yield const AuthenticatedState();
+      yield AuthenticatedState(context: data.context);
     } on Exception catch (e) {
       _exceptionController.add(AuthenticatorException(e));
     }
@@ -488,16 +522,17 @@ class StateMachineBloc
     yield* const Stream.empty();
   }
 
-  Stream<AuthState> _changeScreen(AuthenticatorStep step) async* {
-    yield UnauthenticatedState(step: step);
+  Stream<AuthState> _changeScreen(AuthChangeScreenData data) async* {
+    yield UnauthenticatedState(step: data.step);
     // Emit empty event to resolve bug with broken event handling on web (possible DDC issue)
     yield* const Stream.empty();
   }
 
-  Stream<AuthState> _resendSignUpCode(String username) async* {
+  Stream<AuthState> _resendSignUpCode(AuthResendSignUpCodeData data) async* {
     try {
-      ResendSignUpCodeResult result =
-          await _authService.resendSignUpCode(username);
+      ResendSignUpCodeResult result = await _authService.resendSignUpCode(
+        data.username,
+      );
       _notifyCodeSent(result.codeDeliveryDetails.destination);
       yield currentState;
     } on Exception catch (e) {
