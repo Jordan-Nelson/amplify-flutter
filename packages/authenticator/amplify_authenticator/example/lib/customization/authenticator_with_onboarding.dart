@@ -39,9 +39,11 @@ class AuthenticatorWithOnboarding extends StatelessWidget {
             return OnboardingView(
               navigateToSignIn: () => state.changeStep(
                 AuthenticatorStep.signIn,
+                context: context,
               ),
               navigateToSignUp: () => state.changeStep(
                 AuthenticatorStep.signUp,
+                context: context,
               ),
             );
           default:

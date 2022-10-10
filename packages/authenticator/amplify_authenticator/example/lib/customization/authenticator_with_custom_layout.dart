@@ -131,50 +131,50 @@ class SignUpView extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: SingleChildScrollView(
-        child: AuthenticatorForm(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                // app logo (flutter logo used for example)
-                const Center(child: FlutterLogo(size: 100)),
+          // child: AuthenticatorForm(
+          //   child: Padding(
+          //     padding: const EdgeInsets.symmetric(horizontal: 16),
+          //     child: Column(
+          //       children: [
+          //         // app logo (flutter logo used for example)
+          //         const Center(child: FlutterLogo(size: 100)),
 
-                // prebuilt fields for username, email, and password from
-                // amplify_authenticator package
-                SignUpFormField.username(),
-                SignUpFormField.email(required: true),
-                SignUpFormField.password(),
-                SignUpFormField.passwordConfirmation(),
+          //         // prebuilt fields for username, email, and password from
+          //         // amplify_authenticator package
+          //         SignUpFormField.username(),
+          //         SignUpFormField.email(required: true),
+          //         SignUpFormField.password(),
+          //         SignUpFormField.passwordConfirmation(),
 
-                // custom field for a terms and conditions checkbox
-                //
-                // this will set a custom user attribute named `custom:terms-and-conditions`
-                // to "true" if the checkbox has been checked
-                //
-                // custom form validation will prevent sign up if the checkbox is not
-                // checked, and a custom error message will be displayed.
-                TermsAndConditionsCheckBox(
-                  onChanged: (value) => state.setCustomAttribute(
-                    const CognitoUserAttributeKey.custom(
-                      'terms-and-conditions',
-                    ),
-                    value.toString(),
-                  ),
-                ),
+          //         // custom field for a terms and conditions checkbox
+          //         //
+          //         // this will set a custom user attribute named `custom:terms-and-conditions`
+          //         // to "true" if the checkbox has been checked
+          //         //
+          //         // custom form validation will prevent sign up if the checkbox is not
+          //         // checked, and a custom error message will be displayed.
+          //         TermsAndConditionsCheckBox(
+          //           onChanged: (value) => state.setCustomAttribute(
+          //             const CognitoUserAttributeKey.custom(
+          //               'terms-and-conditions',
+          //             ),
+          //             value.toString(),
+          //           ),
+          //         ),
 
-                // prebuilt sign up button from amplify_authenticator package
-                const SignUpButton(),
+          //         // prebuilt sign up button from amplify_authenticator package
+          //         const SignUpButton(),
 
-                const SizedBox(height: 16),
-                const Divider(),
+          //         const SizedBox(height: 16),
+          //         const Divider(),
 
-                // custom button to take the user to sign in
-                NavigateToSignInButton(state: state),
-              ],
-            ),
+          //         // custom button to take the user to sign in
+          //         NavigateToSignInButton(state: state),
+          //       ],
+          //     ),
+          //   ),
+          // ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -196,6 +196,7 @@ class NavigateToSignUpButton extends StatelessWidget {
         TextButton(
           onPressed: () => state.changeStep(
             AuthenticatorStep.signUp,
+            context: context,
           ),
           child: const Text('Sign Up'),
         ),
@@ -221,6 +222,7 @@ class NavigateToSignInButton extends StatelessWidget {
         TextButton(
           onPressed: () => state.changeStep(
             AuthenticatorStep.signIn,
+            context: context,
           ),
           child: const Text('Sign In'),
         ),

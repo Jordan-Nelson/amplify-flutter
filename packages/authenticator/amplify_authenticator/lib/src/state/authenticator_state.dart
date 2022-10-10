@@ -18,7 +18,9 @@ import 'package:amplify_authenticator/amplify_authenticator.dart';
 import 'package:amplify_authenticator/src/blocs/auth/auth_bloc.dart';
 import 'package:amplify_authenticator/src/blocs/auth/auth_data.dart';
 import 'package:amplify_authenticator/src/state/auth_state.dart';
+import 'package:amplify_authenticator/src/state/inherited_authenticator_state.dart';
 import 'package:amplify_authenticator/src/utils/country_code.dart';
+import 'package:amplify_authenticator/src/widgets/form.dart';
 import 'package:flutter/material.dart';
 
 @visibleForTesting
@@ -31,16 +33,20 @@ typedef BlocEventPredicate = bool Function(AuthState state);
 ///
 /// Intended to be used within custom UIs for the Amplify Authenticator.
 class AuthenticatorState extends ChangeNotifier {
-  AuthenticatorState(this._authBloc) {
+  AuthenticatorState(this._authBloc, this._routerInfo) {
     // Listen to step changes to know when to clear the form. Calling `clean`
     // from the forms' dispose method is unreliable since it may be called after
     // the transitioning form's first build is called.
     //
     // When auth flow is complete, reset entirety of the view model state.
     _authBloc.stream.distinct().listen((event) {
-      _resetFormKey();
       resetCode();
       if (event is AuthenticatedState) {
+        if (event.context != null &&
+            !event.initialRoute &&
+            _routerInfo != null) {
+          _routerInfo!.onSignIn(event.context!);
+        }
         _resetAttributes();
       }
     });
@@ -48,18 +54,14 @@ class AuthenticatorState extends ChangeNotifier {
     // Always listen for ConfirmSignInCustom events (not distinct)
     _authBloc.stream.listen((event) {
       if (event is ConfirmSignInCustom) {
-        _resetFormKey();
         publicChallengeParams = event.publicParameters;
       }
     });
   }
 
-  GlobalKey<FormState> _formKey = GlobalKey();
-
-  /// The key used for all Authenticator forms
-  GlobalKey<FormState> get formKey => _formKey;
-
   final StateMachineBloc _authBloc;
+
+  final AuthenticatorRouterInfo? _routerInfo;
 
   /// The current step of the authentication flow (signIn, signUp, confirmSignUp, etc.)
   AuthenticatorStep get currentStep {
@@ -71,6 +73,22 @@ class AuthenticatorState extends ChangeNotifier {
     } else {
       return AuthenticatorStep.signIn;
     }
+  }
+
+  // TODO(Jordan-Nelson): Investigate bug with `listen: true`.
+  // This was causing an issue with go_router when navigating directly to a
+  // route with a guard while authenticated.
+  static AuthenticatorState of(BuildContext context) =>
+      InheritedAuthenticatorState.of(context, listen: false);
+
+  Future<bool> isAuthenticated() async {
+    final state = await _authBloc.stream.firstWhere(
+      (state) => (state is! LoadingState),
+    );
+    if (state is UnauthenticatedState) {
+      return false;
+    }
+    return true;
   }
 
   /// Indicates if the form is currently in a loading state
@@ -300,108 +318,121 @@ class AuthenticatorState extends ChangeNotifier {
 
   /// Complete custom auth form using the values for [confirmationCode],
   /// [rememberDevice], and any user attributes.
-  Future<void> confirmSignInCustomAuth() async {
-    if (!_formKey.currentState!.validate()) {
+  Future<void> confirmSignInCustomAuth(BuildContext context) async {
+    if (!confirmSignInCustomAuthFormKey.currentState!.validate()) {
       return;
     }
     _setIsBusy(true);
-    var confirm = AuthConfirmSignInData(
+    final data = AuthConfirmSignInData(
       confirmationValue: _confirmationCode.trim(),
       attributes: authAttributes,
+      rememberDevice: rememberDevice,
+      context: context,
     );
-
-    _authBloc.add(AuthConfirmSignIn(confirm, rememberDevice: rememberDevice));
+    _authBloc.add(AuthConfirmSignIn(data));
     await nextBlocEvent();
     _setIsBusy(false);
   }
 
   /// Complete MFA using the values for [confirmationCode],
   /// [rememberDevice], and any user attributes.
-  Future<void> confirmSignInMFA() async {
-    if (!_formKey.currentState!.validate()) {
+  Future<void> confirmSignInMFA(BuildContext context) async {
+    if (!confirmSignInMFAFormKey.currentState!.validate()) {
       return;
     }
     _setIsBusy(true);
-    var confirm = AuthConfirmSignInData(
+    final data = AuthConfirmSignInData(
       confirmationValue: _confirmationCode.trim(),
       attributes: authAttributes,
+      rememberDevice: rememberDevice,
+      context: context,
     );
-
-    _authBloc.add(AuthConfirmSignIn(confirm, rememberDevice: rememberDevice));
+    _authBloc.add(AuthConfirmSignIn(data));
     await nextBlocEvent();
     _setIsBusy(false);
   }
 
   /// Complete the force password change with [newPassword]
-  Future<void> confirmSignInNewPassword() async {
-    if (!_formKey.currentState!.validate()) {
+  Future<void> confirmSignInNewPassword(BuildContext context) async {
+    if (!confirmSignInNewPasswordFormKey.currentState!.validate()) {
       return;
     }
     _setIsBusy(true);
-    var confirm = AuthConfirmSignInData(
+    final data = AuthConfirmSignInData(
       confirmationValue: _newPassword.trim(),
       attributes: authAttributes,
+      rememberDevice: rememberDevice,
+      context: context,
     );
-
-    _authBloc.add(AuthConfirmSignIn(confirm, rememberDevice: rememberDevice));
+    _authBloc.add(AuthConfirmSignIn(data));
     await nextBlocEvent();
     _setIsBusy(false);
   }
 
   /// Confirm sign up with [confirmationCode], [username], and [password]
-  Future<void> confirmSignUp() async {
-    if (!_formKey.currentState!.validate()) {
+  Future<void> confirmSignUp(BuildContext context) async {
+    if (!confirmSignUpFormKey.currentState!.validate()) {
       return;
     }
     _setIsBusy(true);
-    final confirmation = AuthConfirmSignUpData(
+    final data = AuthConfirmSignUpData(
       code: _confirmationCode.trim(),
       username: _username.trim(),
       password: _password.trim(),
+      context: context,
     );
-
-    _authBloc.add(AuthConfirmSignUp(confirmation));
+    _authBloc.add(AuthConfirmSignUp(data));
     await nextBlocEvent();
     _setIsBusy(false);
   }
 
   /// Sign in with [username], and [password]
-  Future<void> signIn() async {
-    if (!_formKey.currentState!.validate()) {
+  Future<void> signIn(BuildContext context) async {
+    if (!signInFormKey.currentState!.validate()) {
       return;
     }
     _setIsBusy(true);
-    AuthSignInData signIn = AuthUsernamePasswordSignInData(
+    final data = AuthUsernamePasswordSignInData(
       username: _username.trim(),
       password: _password.trim(),
+      context: context,
     );
-    _authBloc.add(AuthSignIn(signIn));
+    _authBloc.add(AuthSignIn(data));
     await nextBlocEvent();
     _setIsBusy(false);
   }
 
-  /// Perform sicial sign in with the given provider
-  Future<void> signInWithProvider(AuthProvider provider) async {
-    final signInData = AuthSocialSignInData(provider: provider);
-    _authBloc.add(AuthSignIn(signInData));
+  /// Perform social sign in with the given provider
+  Future<void> signInWithProvider(
+    AuthProvider provider,
+    BuildContext context,
+  ) async {
+    final data = AuthSocialSignInData(
+      provider: provider,
+      context: context,
+    );
+    _authBloc.add(AuthSignIn(data));
   }
 
-  /// Sign out the currecnt user
-  Future<void> signOut() async {
+  /// Sign out the current user
+  Future<void> signOut(BuildContext context) async {
     _setIsBusy(true);
-    _authBloc.add(const AuthSignOut());
+    _authBloc.add(AuthSignOut(AuthSignOutData(context: context)));
     await nextBlocEvent();
     _setIsBusy(false);
   }
 
   /// Initiates the reset password process for the user with the given [username]
-  Future<void> resetPassword() async {
-    if (!_formKey.currentState!.validate()) {
+  Future<void> resetPassword(BuildContext context) async {
+    if (!resetPasswordFormKey.currentState!.validate()) {
       return;
     }
     _setIsBusy(true);
-    final resetPasswordData = AuthResetPasswordData(username: _username.trim());
-    _authBloc.add(AuthResetPassword(resetPasswordData));
+    final data = AuthResetPasswordData(
+      username: _username.trim(),
+      context: context,
+    );
+    _authBloc.add(AuthResetPassword(data));
     await nextBlocEvent(
       where: (state) => state is UnauthenticatedState,
     );
@@ -410,18 +441,18 @@ class AuthenticatorState extends ChangeNotifier {
 
   /// Completes the reset password process with [confirmationCode],
   /// [username], and [newPassword]
-  Future<void> confirmResetPassword() async {
-    if (!_formKey.currentState!.validate()) {
+  Future<void> confirmResetPassword(BuildContext context) async {
+    if (!confirmResetPasswordFormKey.currentState!.validate()) {
       return;
     }
     _setIsBusy(true);
-    AuthConfirmResetPasswordData confirmResetPasswordData =
-        AuthConfirmResetPasswordData(
+    final data = AuthConfirmResetPasswordData(
       username: _username.trim(),
       confirmationCode: _confirmationCode.trim(),
       newPassword: _newPassword.trim(),
+      context: context,
     );
-    _authBloc.add(AuthConfirmResetPassword(confirmResetPasswordData));
+    _authBloc.add(AuthConfirmResetPassword(data));
     await nextBlocEvent(
       where: (state) => state is UnauthenticatedState,
     );
@@ -429,41 +460,46 @@ class AuthenticatorState extends ChangeNotifier {
   }
 
   /// Sign up with [username], [password] and any user attributes
-  Future<void> signUp() async {
-    if (!_formKey.currentState!.validate()) {
+  Future<void> signUp(BuildContext context) async {
+    if (!signUpFormKey.currentState!.validate()) {
       return;
     }
     _setIsBusy(true);
-
-    final signUp = AuthSignUpData(
+    final data = AuthSignUpData(
       username: _username.trim(),
       password: _password.trim(),
       attributes: authAttributes,
+      context: context,
     );
-
-    _authBloc.add(AuthSignUp(signUp));
+    _authBloc.add(AuthSignUp(data));
     await nextBlocEvent();
     _setIsBusy(false);
   }
 
   /// Resend sign up code for the user with the given [username]
-  Future<void> resendSignUpCode() async {
-    _authBloc.add(AuthResendSignUpCode(_username));
+  Future<void> resendSignUpCode(BuildContext context) async {
+    final data = AuthResendSignUpCodeData(
+      username: _username.trim(),
+      context: context,
+    );
+    _authBloc.add(AuthResendSignUpCode(data));
     await nextBlocEvent();
   }
 
   Future<void> confirmVerifyUser(
-      CognitoUserAttributeKey userAttributeKey) async {
-    if (!_formKey.currentState!.validate()) {
+    CognitoUserAttributeKey userAttributeKey,
+    BuildContext context,
+  ) async {
+    if (!confirmVerifyUserFormKey.currentState!.validate()) {
       return;
     }
     _setIsBusy(true);
-    AuthConfirmVerifyUserData authConfirmVerifyUserData =
-        AuthConfirmVerifyUserData(
+    final data = AuthConfirmVerifyUserData(
       userAttributeKey: userAttributeKey,
       code: _confirmationCode,
+      context: context,
     );
-    _authBloc.add(AuthConfirmVerifyUser(authConfirmVerifyUserData));
+    _authBloc.add(AuthConfirmVerifyUser(data));
     await nextBlocEvent(
       where: (state) =>
           state is UnauthenticatedState || state is AuthenticatedState,
@@ -471,24 +507,25 @@ class AuthenticatorState extends ChangeNotifier {
     _setIsBusy(false);
   }
 
-  Future<void> verifyUser() async {
-    if (!_formKey.currentState!.validate()) {
+  Future<void> verifyUser(BuildContext context) async {
+    if (!verifyUserFormKey.currentState!.validate()) {
       return;
     }
     _setIsBusy(true);
-    AuthVerifyUserData authVerifyUserData = AuthVerifyUserData(
+    final data = AuthVerifyUserData(
       userAttributeKey: attributeKeyToVerify,
+      context: context,
     );
-
-    _authBloc.add(AuthVerifyUser(authVerifyUserData));
+    _authBloc.add(AuthVerifyUser(data));
     await nextBlocEvent(
       where: (state) => state is! LoadingState,
     );
     _setIsBusy(false);
   }
 
-  void skipVerifyUser() {
-    _authBloc.add(const AuthSkipVerifyUser());
+  void skipVerifyUser(BuildContext context) {
+    final data = AuthSkipVerifyUserData(context: context);
+    _authBloc.add(AuthSkipVerifyUser(data));
   }
 
   @visibleForTesting
@@ -509,9 +546,14 @@ class AuthenticatorState extends ChangeNotifier {
   /// password, and user attributes.
   void changeStep(
     AuthenticatorStep step, {
+    required BuildContext context,
     bool reset = true,
   }) {
-    _authBloc.add(AuthChangeScreen(step));
+    if (_routerInfo != null) {
+      _routerInfo!.onStepChange(context, step);
+    }
+    final data = AuthChangeScreenData(context: context, step: step);
+    _authBloc.add(AuthChangeScreen(data));
 
     /// Clean [ViewModel] when user manually navigates widgets
     if (reset) {
@@ -520,9 +562,10 @@ class AuthenticatorState extends ChangeNotifier {
   }
 
   /// Reset the authentication flow if initiated
-  void abortSignIn() {
+  void abortSignIn(BuildContext context) {
     _resetAttributes();
-    _authBloc.add(const AuthSignOut());
+    final data = AuthSignOutData(context: context);
+    _authBloc.add(AuthSignOut(data));
   }
 
   void _resetAttributes() {
@@ -533,10 +576,6 @@ class AuthenticatorState extends ChangeNotifier {
     _newPassword = '';
     authAttributes.clear();
     _publicChallengeParams.clear();
-  }
-
-  void _resetFormKey() {
-    _formKey = GlobalKey<FormState>();
   }
 
   void resetCode() {

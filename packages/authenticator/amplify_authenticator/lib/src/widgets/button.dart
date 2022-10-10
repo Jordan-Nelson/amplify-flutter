@@ -96,7 +96,11 @@ abstract class AuthenticatorButtonState<T extends AuthenticatorButton<T>>
 abstract class AuthenticatorElevatedButton
     extends AuthenticatorButton<AuthenticatorElevatedButton> {
   /// {@macro amplify_authenticator.amplify_elevated_button}
-  const AuthenticatorElevatedButton({Key? key}) : super(key: key);
+  const AuthenticatorElevatedButton({Key? key, this.maxWidth = true})
+      : super(key: key);
+
+  /// If set to true, the button will have a width of [double.infinity].
+  final bool maxWidth;
 
   @override
   Widget? get loadingIndicator => const AmplifyProgressIndicator();
@@ -112,34 +116,38 @@ class _AmplifyElevatedButtonState
   Widget build(BuildContext context) {
     final buttonResolver = stringResolver.buttons;
     final loadingIndicator = widget.loadingIndicator;
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        focusNode: focusNode,
-        onPressed: state.isBusy ? null : () => widget.onPressed(context, state),
-        child: state.isBusy && loadingIndicator != null
-            ? loadingIndicator
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (widget.leading != null) widget.leading!,
-                  Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        buttonResolver.resolve(
-                          context,
-                          widget.labelKey,
-                        ),
-                        textAlign: TextAlign.center,
+    final button = ElevatedButton(
+      focusNode: focusNode,
+      onPressed: state.isBusy ? null : () => widget.onPressed(context, state),
+      child: state.isBusy && loadingIndicator != null
+          ? loadingIndicator
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.leading != null) widget.leading!,
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      buttonResolver.resolve(
+                        context,
+                        widget.labelKey,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                  if (widget.trailing != null) widget.trailing!,
-                ].spacedBy(const SizedBox(width: 10)),
-              ),
-      ),
+                ),
+                if (widget.trailing != null) widget.trailing!,
+              ].spacedBy(const SizedBox(width: 10)),
+            ),
     );
+    if (widget.maxWidth) {
+      return SizedBox(
+        width: double.infinity,
+        child: button,
+      );
+    }
+    return button;
   }
 }
 
@@ -161,7 +169,7 @@ class SignUpButton extends AuthenticatorElevatedButton {
 
   @override
   void onPressed(BuildContext context, AuthenticatorState state) =>
-      state.signUp();
+      state.signUp(context);
 }
 
 /// {@category Prebuilt Widgets}
@@ -182,7 +190,7 @@ class SignInButton extends AuthenticatorElevatedButton {
 
   @override
   void onPressed(BuildContext context, AuthenticatorState state) =>
-      state.signIn();
+      state.signIn(context);
 }
 
 /// {@category Prebuilt Widgets}
@@ -203,7 +211,7 @@ class ConfirmSignUpButton extends AuthenticatorElevatedButton {
 
   @override
   void onPressed(BuildContext context, AuthenticatorState state) =>
-      state.confirmSignUp();
+      state.confirmSignUp(context);
 }
 
 /// {@category Prebuilt Widgets}
@@ -224,7 +232,7 @@ class ConfirmSignInCustomButton extends ConfirmSignInMFAButton {
 
   @override
   void onPressed(BuildContext context, AuthenticatorState state) =>
-      state.confirmSignInCustomAuth();
+      state.confirmSignInCustomAuth(context);
 }
 
 /// {@category Prebuilt Widgets}
@@ -245,7 +253,7 @@ class ConfirmSignInMFAButton extends AuthenticatorElevatedButton {
 
   @override
   void onPressed(BuildContext context, AuthenticatorState state) =>
-      state.confirmSignInMFA();
+      state.confirmSignInMFA(context);
 }
 
 /// {@category Prebuilt Widgets}
@@ -254,24 +262,54 @@ class ConfirmSignInMFAButton extends AuthenticatorElevatedButton {
 ///
 /// Uses [ButtonResolverKey.signout] for localization
 /// {@endtemplate}
-class SignOutButton extends StatelessAuthenticatorComponent {
-  /// {@macro amplify_authenticator.sign_out_button}
-  const SignOutButton({Key? key = keySignOutButton}) : super(key: key);
+// class SignOutButton1 extends StatelessAuthenticatorComponent {
+//   /// {@macro amplify_authenticator.sign_out_button}
+//   const SignOutButton1({Key? key = keySignOutButton, this.onSignOut})
+//       : super(key: key);
+
+//   final void Function()? onSignOut;
+
+//   @override
+//   Widget builder(
+//     BuildContext context,
+//     AuthenticatorState state,
+//     AuthStringResolver stringResolver,
+//   ) {
+//     final ButtonResolver buttonResolver = stringResolver.buttons;
+
+//     return ElevatedButton(
+//       onPressed: () async {
+//         await state.signOut(context);
+//         if (onSignOut != null) {
+//           onSignOut!();
+//         }
+//       },
+//       child: Text(
+//         buttonResolver.signout(context),
+//       ),
+//     );
+//   }
+// }
+
+class SignOutButton extends AuthenticatorElevatedButton {
+  /// {@macro amplify_authenticator.sign_up_button}
+  const SignOutButton({Key? key, this.onSignOut})
+      : super(
+          key: key ?? keySignOutButton,
+          maxWidth: false,
+        );
+
+  final void Function()? onSignOut;
 
   @override
-  Widget builder(
-    BuildContext context,
-    AuthenticatorState state,
-    AuthStringResolver stringResolver,
-  ) {
-    final ButtonResolver buttonResolver = stringResolver.buttons;
+  ButtonResolverKey get labelKey => ButtonResolverKey.signout;
 
-    return ElevatedButton(
-      onPressed: state.signOut,
-      child: Text(
-        buttonResolver.signout(context),
-      ),
-    );
+  @override
+  Future<void> onPressed(BuildContext context, AuthenticatorState state) async {
+    await state.signOut(context);
+    if (onSignOut != null) {
+      onSignOut!();
+    }
   }
 }
 
@@ -302,9 +340,10 @@ class BackToSignInButton extends StatelessAuthenticatorComponent {
         if (!abortSignIn) {
           state.changeStep(
             AuthenticatorStep.signIn,
+            context: context,
           );
         } else {
-          state.abortSignIn();
+          state.abortSignIn(context);
         }
       },
     );
@@ -348,7 +387,7 @@ class LostCodeButton extends StatelessAuthenticatorComponent {
             ),
           ),
           TextButton(
-            onPressed: state.resendSignUpCode,
+            onPressed: () => state.resendSignUpCode(context),
             child: Text(
               buttonResolver.sendCode(context),
               style: const TextStyle(fontSize: fontSize),
@@ -381,6 +420,7 @@ class ForgotPasswordButton extends StatelessAuthenticatorComponent {
       ),
       onPressed: () => state.changeStep(
         AuthenticatorStep.resetPassword,
+        context: context,
       ),
     );
   }
@@ -404,7 +444,7 @@ class ResetPasswordButton extends AuthenticatorElevatedButton {
 
   @override
   void onPressed(BuildContext context, AuthenticatorState state) =>
-      state.resetPassword();
+      state.resetPassword(context);
 }
 
 /// {@category Prebuilt Widgets}
@@ -425,7 +465,7 @@ class ConfirmResetPasswordButton extends AuthenticatorElevatedButton {
 
   @override
   void onPressed(BuildContext context, AuthenticatorState state) =>
-      state.confirmResetPassword();
+      state.confirmResetPassword(context);
 }
 
 /// {@category Prebuilt Widgets}
@@ -446,7 +486,7 @@ class ConfirmSignInNewPasswordButton extends AuthenticatorElevatedButton {
 
   @override
   void onPressed(BuildContext context, AuthenticatorState state) =>
-      state.confirmSignInNewPassword();
+      state.confirmSignInNewPassword(context);
 }
 
 /// {@category Prebuilt Widgets}
@@ -467,7 +507,7 @@ class VerifyUserButton extends AuthenticatorElevatedButton {
 
   @override
   void onPressed(BuildContext context, AuthenticatorState state) {
-    state.verifyUser();
+    state.verifyUser(context);
   }
 }
 
@@ -491,7 +531,7 @@ class ConfirmVerifyUserButton extends AuthenticatorElevatedButton {
   void onPressed(BuildContext context, AuthenticatorState state) {
     final authState =
         InheritedAuthBloc.of(context).currentState as AttributeVerificationSent;
-    state.confirmVerifyUser(authState.userAttributeKey);
+    state.confirmVerifyUser(authState.userAttributeKey, context);
   }
 }
 
@@ -511,7 +551,7 @@ class SkipVerifyUserButton extends StatelessAuthenticatorComponent {
   ) {
     return TextButton(
       key: keySkipVerifyUserButton,
-      onPressed: state.skipVerifyUser,
+      onPressed: () => state.skipVerifyUser(context),
       child: Text(
         stringResolver.buttons.skip(context),
         style: TextStyle(

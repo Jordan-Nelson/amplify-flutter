@@ -117,19 +117,22 @@ class AuthenticatorScreen extends StatelessAuthenticatorComponent {
     } else {
       containerWidth = AuthenticatorContainerConstants.mediumWidth;
 
-      child = Center(
-        child: SingleChildScrollView(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: containerWidth),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: containerPadding),
-                  child: Card(child: SafeArea(child: child)),
+      child = Container(
+        color: Theme.of(context).backgroundColor,
+        child: Center(
+          child: SingleChildScrollView(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: containerWidth),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: containerPadding),
+                    child: Card(child: SafeArea(child: child)),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -245,7 +248,7 @@ class _AuthenticatorTabViewState
 
   void _updateForm() {
     // Update the Authenticator's internal state on tab changes.
-    state.changeStep(selectedTab, reset: false);
+    state.changeStep(selectedTab, context: context, reset: false);
   }
 
   Color getTabLabelColor(BuildContext context) {
