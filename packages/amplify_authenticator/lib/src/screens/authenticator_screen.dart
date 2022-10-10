@@ -15,6 +15,7 @@
 
 import 'package:amplify_authenticator/amplify_authenticator.dart';
 import 'package:amplify_authenticator/src/constants/authenticator_constants.dart';
+import 'package:amplify_authenticator/src/state/inherited_authenticator_state.dart';
 import 'package:amplify_authenticator/src/state/inherited_config.dart';
 import 'package:amplify_authenticator/src/state/inherited_forms.dart';
 import 'package:amplify_authenticator/src/widgets/component.dart';
@@ -117,19 +118,22 @@ class AuthenticatorScreen extends StatelessAuthenticatorComponent {
     } else {
       containerWidth = AuthenticatorContainerConstants.mediumWidth;
 
-      child = Center(
-        child: SingleChildScrollView(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: containerWidth),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: containerPadding),
-                  child: Card(child: SafeArea(child: child)),
+      child = Container(
+        color: Theme.of(context).backgroundColor,
+        child: Center(
+          child: SingleChildScrollView(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: containerWidth),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: containerPadding),
+                    child: Card(child: SafeArea(child: child)),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -244,7 +248,8 @@ class _AuthenticatorTabViewState
   }
 
   void _updateForm() {
-    setState(() {});
+    final authenticatorState = InheritedAuthenticatorState.of(context);
+    authenticatorState.changeStep(selectedTab, context: context);
   }
 
   Color getTabLabelColor(BuildContext context) {

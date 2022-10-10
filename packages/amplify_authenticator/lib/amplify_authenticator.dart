@@ -21,6 +21,7 @@ library amplify_authenticator;
 import 'dart:async';
 
 import 'package:amplify_authenticator/src/blocs/auth/auth_bloc.dart';
+import 'package:amplify_authenticator/src/blocs/auth/auth_data.dart';
 import 'package:amplify_authenticator/src/constants/authenticator_constants.dart';
 import 'package:amplify_authenticator/src/enums/enums.dart';
 import 'package:amplify_authenticator/src/keys.dart';
@@ -28,6 +29,7 @@ import 'package:amplify_authenticator/src/l10n/auth_strings_resolver.dart';
 import 'package:amplify_authenticator/src/l10n/authenticator_localizations.dart';
 import 'package:amplify_authenticator/src/models/authenticator_builder.dart';
 import 'package:amplify_authenticator/src/models/authenticator_exception.dart';
+import 'package:amplify_authenticator/src/router/authenticator_router_info.dart';
 import 'package:amplify_authenticator/src/screens/authenticator_screen.dart';
 import 'package:amplify_authenticator/src/screens/loading_screen.dart';
 import 'package:amplify_authenticator/src/services/amplify_auth_service.dart';
@@ -47,7 +49,6 @@ import 'package:flutter/material.dart';
 
 export 'package:amplify_auth_cognito/amplify_auth_cognito.dart'
     show AuthProvider;
-
 export 'package:amplify_flutter/amplify_flutter.dart'
     show PasswordProtectionSettings, PasswordPolicyCharacters;
 
@@ -56,6 +57,9 @@ export 'src/l10n/auth_strings_resolver.dart' hide ButtonResolverKeyType;
 export 'src/models/authenticator_exception.dart';
 export 'src/models/username_input.dart'
     show UsernameType, UsernameInput, UsernameSelection;
+export 'src/router/authenticator_go_router.dart' show AuthenticatorGoRouter;
+export 'src/router/authenticator_router_info.dart' show AuthenticatorRouterInfo;
+export 'src/screens/authenticator_screen.dart' show AuthenticatorScreen;
 export 'src/state/authenticator_state.dart';
 export 'src/widgets/button.dart'
     show
@@ -305,6 +309,7 @@ class Authenticator extends StatefulWidget {
   /// {@macro amplify_authenticator.authenticator}
   Authenticator({
     Key? key,
+    this.routerInfo,
     this.signInForm,
     this.signUpForm,
     this.confirmSignInNewPasswordForm,
@@ -355,6 +360,8 @@ class Authenticator extends StatefulWidget {
         }
         return _AuthenticatorBody(child: child);
       };
+
+  final AuthenticatorRouterInfo? routerInfo;
 
   // Padding around each authenticator view
   final EdgeInsets padding;
@@ -477,8 +484,16 @@ class _AuthenticatorState extends State<Authenticator> {
       authService: _authService,
       preferPrivateSession: widget.preferPrivateSession,
       initialStep: widget.initialStep,
-    )..add(const AuthLoad());
-    _authenticatorState = AuthenticatorState(_stateMachineBloc);
+      // TODO(Jordan-Nelson): This context is passed into the customer provided
+      // onSignIn method. However, it cannot be used to obtain a router
+      // via SomeRouter.of(context) because the Authenticator is higher in the
+      // widget tree. We can work around this if the customer is using go_router
+      // but is a problem for use cases with custom routers.
+    )..add(AuthLoad(AuthLoadData(context: context)));
+    _authenticatorState = AuthenticatorState(
+      _stateMachineBloc,
+      widget.routerInfo,
+    );
     _subscribeToExceptions();
     _subscribeToInfoMessages();
     _subscribeToSuccessEvents();
@@ -648,7 +663,7 @@ class _AuthenticatorState extends State<Authenticator> {
                     widget.confirmSignInNewPasswordForm ??
                         ConfirmSignInNewPasswordForm(),
                 resetPasswordForm: ResetPasswordForm(),
-                confirmResetPasswordForm: const ConfirmResetPasswordForm(),
+                confirmResetPasswordForm: ConfirmResetPasswordForm(),
                 signInForm: widget.signInForm ?? SignInForm(),
                 signUpForm: widget.signUpForm ?? SignUpForm(),
                 confirmSignUpForm: ConfirmSignUpForm(),

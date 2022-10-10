@@ -15,95 +15,72 @@
 
 part of 'auth_bloc.dart';
 
-abstract class AuthEvent {
-  const AuthEvent();
+abstract class AuthEvent<T extends AuthData> {
+  const AuthEvent(this.data);
+  final T data;
 }
 
-class AuthLoad extends AuthEvent {
-  const AuthLoad();
+class AuthLoad extends AuthEvent<AuthLoadData> {
+  const AuthLoad(super.data);
 }
 
-class AuthChangeScreen extends AuthEvent {
-  final AuthenticatorStep step;
-
-  const AuthChangeScreen(this.step);
+class AuthChangeScreen extends AuthEvent<AuthChangeScreenData> {
+  const AuthChangeScreen(super.data);
 }
 
-class AuthSignIn extends AuthEvent {
-  final AuthSignInData data;
-
-  const AuthSignIn(this.data);
+class AuthSignIn extends AuthEvent<AuthSignInData> {
+  const AuthSignIn(super.data);
 }
 
-class AuthSignUp extends AuthEvent {
-  final AuthSignUpData data;
-
-  const AuthSignUp(this.data);
+class AuthSignUp extends AuthEvent<AuthSignUpData> {
+  const AuthSignUp(super.data);
 }
 
-class AuthConfirmSignUp extends AuthEvent {
-  final AuthConfirmSignUpData data;
-
-  const AuthConfirmSignUp(this.data);
+class AuthConfirmSignUp extends AuthEvent<AuthConfirmSignUpData> {
+  const AuthConfirmSignUp(super.data);
 }
 
-class AuthSignOut extends AuthEvent {
-  const AuthSignOut();
+class AuthSignOut extends AuthEvent<AuthSignOutData> {
+  const AuthSignOut(super.data);
 }
 
-class AuthExceptionEvent extends AuthEvent {
-  const AuthExceptionEvent();
+class AuthExceptionEvent extends AuthEvent<AuthData> {
+  const AuthExceptionEvent(super.data);
 }
 
-class AuthResetPassword extends AuthEvent {
-  const AuthResetPassword(this.data);
-
-  final AuthResetPasswordData data;
+class AuthResetPassword extends AuthEvent<AuthResetPasswordData> {
+  const AuthResetPassword(super.data);
 }
 
-class AuthConfirmResetPassword extends AuthEvent {
-  const AuthConfirmResetPassword(this.data);
-
-  final AuthConfirmResetPasswordData data;
+class AuthConfirmResetPassword extends AuthEvent<AuthConfirmResetPasswordData> {
+  const AuthConfirmResetPassword(super.data);
 }
 
-class AuthUpdatePassword extends AuthEvent {
-  const AuthUpdatePassword(this.data);
-
-  final AuthUpdatePasswordData data;
+class AuthUpdatePassword extends AuthEvent<AuthUpdatePasswordData> {
+  const AuthUpdatePassword(super.data);
 }
 
-class AuthConfirmSignIn extends AuthEvent {
-  final AuthConfirmSignInData data;
-  final bool rememberDevice;
-
-  const AuthConfirmSignIn(this.data, {required this.rememberDevice});
+class AuthConfirmSignIn extends AuthEvent<AuthConfirmSignInData> {
+  const AuthConfirmSignIn(super.data);
 }
 
-class AuthSetUnverifiedAttributeKeys extends AuthEvent {
-  final AuthSetUnverifiedAttributeKeysData data;
-
-  const AuthSetUnverifiedAttributeKeys(this.data);
+class AuthSetUnverifiedAttributeKeys
+    extends AuthEvent<AuthSetUnverifiedAttributeKeysData> {
+  const AuthSetUnverifiedAttributeKeys(super.data);
 }
 
-class AuthVerifyUser extends AuthEvent {
-  final AuthVerifyUserData data;
-
-  const AuthVerifyUser(this.data);
+class AuthVerifyUser extends AuthEvent<AuthVerifyUserData> {
+  const AuthVerifyUser(super.data);
 }
 
-class AuthSkipVerifyUser extends AuthEvent {
-  const AuthSkipVerifyUser();
+class AuthSkipVerifyUser extends AuthEvent<AuthSkipVerifyUserData> {
+  const AuthSkipVerifyUser(super.data);
 }
 
-class AuthConfirmVerifyUser extends AuthEvent {
-  final AuthConfirmVerifyUserData data;
-
-  const AuthConfirmVerifyUser(this.data);
+class AuthConfirmVerifyUser extends AuthEvent<AuthConfirmVerifyUserData> {
+  const AuthConfirmVerifyUser(super.data);
 }
 
-class AuthResendSignUpCode extends AuthEvent {
-  const AuthResendSignUpCode(this.username);
-
-  final String username;
+class AuthResendSignUpCode extends AuthEvent<AuthResendSignUpCodeData> {
+  const AuthResendSignUpCode(super.data);
 }
