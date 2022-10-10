@@ -14,35 +14,58 @@
  */
 
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
+import 'package:amplify_authenticator/amplify_authenticator.dart';
+import 'package:flutter/material.dart';
 
-abstract class AuthSignInData {
-  const AuthSignInData();
+abstract class AuthData {
+  const AuthData({required this.context});
+
+  final BuildContext context;
+}
+
+class AuthLoadData extends AuthData {
+  const AuthLoadData({required super.context});
+}
+
+class AuthSignOutData extends AuthData {
+  const AuthSignOutData({required super.context});
+}
+
+class AuthSkipVerifyUserData extends AuthData {
+  const AuthSkipVerifyUserData({required super.context});
+}
+
+class AuthChangeScreenData extends AuthData {
+  const AuthChangeScreenData({required super.context, required this.step});
+
+  final AuthenticatorStep step;
+}
+
+abstract class AuthSignInData extends AuthData {
+  const AuthSignInData({required super.context});
 }
 
 class AuthUsernamePasswordSignInData extends AuthSignInData {
-  const AuthUsernamePasswordSignInData({
-    required this.username,
-    required this.password,
-  });
+  const AuthUsernamePasswordSignInData(
+      {required this.username, required this.password, required super.context});
 
   final String username;
   final String password;
 }
 
 class AuthSocialSignInData extends AuthSignInData {
-  const AuthSocialSignInData({
-    required this.provider,
-  });
+  const AuthSocialSignInData({required this.provider, required super.context});
 
   final AuthProvider provider;
 }
 
 ///Sign Up Data
-class AuthSignUpData {
+class AuthSignUpData extends AuthData {
   const AuthSignUpData({
     required this.password,
     required this.username,
     this.attributes = const {},
+    required super.context,
   });
 
   final Map<CognitoUserAttributeKey, String> attributes;
@@ -52,7 +75,7 @@ class AuthSignUpData {
   final String username;
 }
 
-class AuthConfirmSignUpData {
+class AuthConfirmSignUpData extends AuthData {
   final String code;
 
   final String username;
@@ -63,22 +86,25 @@ class AuthConfirmSignUpData {
     required this.username,
     required this.code,
     required this.password,
+    required super.context,
   });
 }
 
-class AuthResetPasswordData {
+class AuthResetPasswordData extends AuthData {
   const AuthResetPasswordData({
     required this.username,
+    required super.context,
   });
 
   final String username;
 }
 
-class AuthConfirmResetPasswordData {
+class AuthConfirmResetPasswordData extends AuthData {
   const AuthConfirmResetPasswordData({
     required this.username,
     required this.newPassword,
     required this.confirmationCode,
+    required super.context,
   });
 
   final String username;
@@ -86,11 +112,12 @@ class AuthConfirmResetPasswordData {
   final String confirmationCode;
 }
 
-class AuthUpdatePasswordData {
+class AuthUpdatePasswordData extends AuthData {
   const AuthUpdatePasswordData({
     required this.username,
     required this.newPassword,
     this.attributes = const {},
+    required super.context,
   });
 
   final String username;
@@ -98,38 +125,52 @@ class AuthUpdatePasswordData {
   final Map<String, String> attributes;
 }
 
-class AuthConfirmSignInData {
+class AuthConfirmSignInData extends AuthData {
   AuthConfirmSignInData({
     required this.confirmationValue,
+    required this.rememberDevice,
     this.attributes = const {},
+    required super.context,
   });
 
   final String confirmationValue;
   final Map<CognitoUserAttributeKey, String> attributes;
+  final bool rememberDevice;
 }
 
-class AuthSetUnverifiedAttributeKeysData {
+class AuthSetUnverifiedAttributeKeysData extends AuthData {
   const AuthSetUnverifiedAttributeKeysData({
     required this.unverifiedAttributeKeys,
+    required super.context,
   });
 
   final List<String> unverifiedAttributeKeys;
 }
 
-class AuthVerifyUserData {
+class AuthVerifyUserData extends AuthData {
   const AuthVerifyUserData({
     required this.userAttributeKey,
+    required super.context,
   });
 
   final CognitoUserAttributeKey userAttributeKey;
 }
 
-class AuthConfirmVerifyUserData {
+class AuthConfirmVerifyUserData extends AuthData {
   const AuthConfirmVerifyUserData({
     required this.userAttributeKey,
     required this.code,
+    required super.context,
   });
 
   final CognitoUserAttributeKey userAttributeKey;
   final String code;
+}
+
+class AuthResendSignUpCodeData extends AuthData {
+  const AuthResendSignUpCodeData({
+    required this.username,
+    required super.context,
+  });
+  final String username;
 }

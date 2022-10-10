@@ -103,32 +103,32 @@ class CustomConfirmSignInView extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: SingleChildScrollView(
-        child: AuthenticatorForm(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                // app logo (flutter logo used for example)
-                const Center(child: FlutterLogo(size: 100)),
+          // child: AuthenticatorForm(
+          //   child: Padding(
+          //     padding: const EdgeInsets.symmetric(horizontal: 16),
+          //     child: Column(
+          //       children: [
+          //         // app logo (flutter logo used for example)
+          //         const Center(child: FlutterLogo(size: 100)),
 
-                // custom challenge field
-                // Field Title and Field Hint can be set within the Lambda Code.
-                ConfirmSignInFormField.customChallenge(
-                    title: state.publicChallengeParams['fieldTitle'],
-                    hintText: state.publicChallengeParams['fieldHint']),
+          //         // custom challenge field
+          //         // Field Title and Field Hint can be set within the Lambda Code.
+          //         ConfirmSignInFormField.customChallenge(
+          //             title: state.publicChallengeParams['fieldTitle'],
+          //             hintText: state.publicChallengeParams['fieldHint']),
 
-                // prebuilt sign up button from amplify_authenticator package
-                const ConfirmSignInCustomButton(),
-                const SizedBox(height: 16),
-                const Divider(),
+          //         // prebuilt sign up button from amplify_authenticator package
+          //         const ConfirmSignInCustomButton(),
+          //         const SizedBox(height: 16),
+          //         const Divider(),
 
-                // custom button to take the user to sign in
-                NavigateToSignInButton(state: state),
-              ],
-            ),
+          //         // custom button to take the user to sign in
+          //         NavigateToSignInButton(state: state),
+          //       ],
+          //     ),
+          //   ),
+          // ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -145,33 +145,33 @@ class CustomSignInView extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: SingleChildScrollView(
-        child: AuthenticatorForm(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                // app logo (flutter logo used for example)
-                const Center(child: FlutterLogo(size: 100)),
+          // child: AuthenticatorForm(
+          //   child: Padding(
+          //     padding: const EdgeInsets.symmetric(horizontal: 16),
+          //     child: Column(
+          //       children: [
+          //         // app logo (flutter logo used for example)
+          //         const Center(child: FlutterLogo(size: 100)),
 
-                // custom challenge field
-                SignInFormField.username(),
+          //         // custom challenge field
+          //         SignInFormField.username(),
 
-                // custom challenge field
-                // SignInFormField.password(),
+          //         // custom challenge field
+          //         // SignInFormField.password(),
 
-                // prebuilt sign up button from amplify_authenticator package
-                const SignInButton(),
+          //         // prebuilt sign up button from amplify_authenticator package
+          //         const SignInButton(),
 
-                const SizedBox(height: 16),
-                const Divider(),
+          //         const SizedBox(height: 16),
+          //         const Divider(),
 
-                // custom button to take the user to sign in
-                NavigateToSignUpButton(state: state),
-              ],
-            ),
+          //         // custom button to take the user to sign in
+          //         NavigateToSignUpButton(state: state),
+          //       ],
+          //     ),
+          //   ),
+          // ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -191,7 +191,7 @@ class NavigateToSignInButton extends StatelessWidget {
       children: [
         TextButton(
           // abort sign in is called to make sure that the current auth flow is cancelled.
-          onPressed: state.abortSignIn,
+          onPressed: () => state.abortSignIn(context),
           child: const Text('Cancel Sign In'),
         ),
       ],
@@ -216,6 +216,7 @@ class NavigateToSignUpButton extends StatelessWidget {
         TextButton(
           onPressed: () => state.changeStep(
             AuthenticatorStep.signUp,
+            context: context,
           ),
           child: const Text('Sign Up'),
         ),
