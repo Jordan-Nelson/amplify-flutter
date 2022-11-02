@@ -59,6 +59,7 @@ export 'src/models/username_input.dart'
     show UsernameType, UsernameInput, UsernameSelection;
 export 'src/router/authenticator_go_router.dart' show AuthenticatorGoRouter;
 export 'src/router/authenticator_router_info.dart' show AuthenticatorRouterInfo;
+export 'src/router/merged_router_config.dart';
 export 'src/screens/authenticator_screen.dart' show AuthenticatorScreen;
 export 'src/state/authenticator_state.dart';
 export 'src/widgets/button.dart'

@@ -2,6 +2,7 @@ import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_authenticator/amplify_authenticator.dart';
 import 'package:amplify_authenticator_example/customization/authenticator_with_beamer.dart';
 import 'package:amplify_authenticator_example/customization/authenticator_with_go_router.dart';
+import 'package:amplify_authenticator_example/customization/authenticator_with_merged_router.dart';
 import 'package:amplify_authenticator_example/customization/authenticator_with_vrouter.dart';
 import 'package:amplify_authenticator_example/resolvers/localized_button_resolver.dart';
 import 'package:amplify_authenticator_example/resolvers/localized_country_resolver.dart';
@@ -62,7 +63,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return AuthenticatorWithGoRouter();
+    return AuthenticatorWithMergedRouter();
   }
 
   // @override
