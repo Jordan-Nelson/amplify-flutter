@@ -54,7 +54,7 @@ class AuthenticatorWithBeamer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Authenticator(
+    return Authenticator.withRouter(
       routerInfo: AuthenticatorRouterInfo(
         onSignIn: (BuildContext context) {
           return Beamer.of(context).beamToNamed('/profile');

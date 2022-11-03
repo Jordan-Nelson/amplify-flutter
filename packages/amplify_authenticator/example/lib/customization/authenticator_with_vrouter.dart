@@ -24,7 +24,7 @@ class AuthenticatorWithVRouter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Authenticator(
+    return Authenticator.withRouter(
       // Customer needs to provide `routerInfo` so that the authenticator
       // knows how to handle signIn, and onStepChange
       routerInfo: AuthenticatorRouterInfo(

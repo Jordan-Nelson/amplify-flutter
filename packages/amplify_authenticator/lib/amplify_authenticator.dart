@@ -30,6 +30,8 @@ import 'package:amplify_authenticator/src/l10n/authenticator_localizations.dart'
 import 'package:amplify_authenticator/src/models/authenticator_builder.dart';
 import 'package:amplify_authenticator/src/models/authenticator_exception.dart';
 import 'package:amplify_authenticator/src/router/authenticator_router_info.dart';
+import 'package:amplify_authenticator/src/router/go_router_utils.dart'
+    as go_router_utils;
 import 'package:amplify_authenticator/src/screens/authenticator_screen.dart';
 import 'package:amplify_authenticator/src/screens/loading_screen.dart';
 import 'package:amplify_authenticator/src/services/amplify_auth_service.dart';
@@ -46,6 +48,7 @@ import 'package:amplify_authenticator/src/widgets/form.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 export 'package:amplify_auth_cognito/amplify_auth_cognito.dart'
     show AuthProvider;
@@ -57,7 +60,6 @@ export 'src/l10n/auth_strings_resolver.dart' hide ButtonResolverKeyType;
 export 'src/models/authenticator_exception.dart';
 export 'src/models/username_input.dart'
     show UsernameType, UsernameInput, UsernameSelection;
-export 'src/router/authenticator_go_router.dart' show AuthenticatorGoRouter;
 export 'src/router/authenticator_router_info.dart' show AuthenticatorRouterInfo;
 export 'src/screens/authenticator_screen.dart' show AuthenticatorScreen;
 export 'src/state/authenticator_state.dart';
@@ -309,7 +311,7 @@ class Authenticator extends StatefulWidget {
   /// {@macro amplify_authenticator.authenticator}
   Authenticator({
     Key? key,
-    this.routerInfo,
+    // this.routerInfo,
     this.signInForm,
     this.signUpForm,
     this.confirmSignInNewPasswordForm,
@@ -321,7 +323,88 @@ class Authenticator extends StatefulWidget {
     this.initialStep = AuthenticatorStep.signIn,
     this.authenticatorBuilder,
     this.padding = const EdgeInsets.all(32),
-  }) : super(key: key) {
+  })  : _routerInfo = null,
+        super(key: key) {
+    // ignore: prefer_asserts_with_message
+    assert(() {
+      if (!validInitialAuthenticatorSteps.contains(initialStep)) {
+        throw FlutterError.fromParts([
+          ErrorSummary('Invalid initialStep'),
+          ErrorDescription(
+            'initialStep must be one of the following values: \n - ${validInitialAuthenticatorSteps.join('\n -')}',
+          )
+        ]);
+      }
+      return true;
+    }());
+  }
+
+  /// Creates an [Authenticator] that is intended to work with
+  /// [MaterialApp.router].
+  ///
+  /// ### Example:
+  /// TODO(Jordan-Nelson): Add example
+  /// ```dart
+  ///
+  /// ```
+  Authenticator.withRouter({
+    Key? key,
+    required AuthenticatorRouterInfo routerInfo,
+    this.signInForm,
+    this.signUpForm,
+    this.confirmSignInNewPasswordForm,
+    this.stringResolver = const AuthStringResolver(),
+    required this.child,
+    this.onException,
+    this.exceptionBannerLocation = ExceptionBannerLocation.auto,
+    this.preferPrivateSession = false,
+    this.initialStep = AuthenticatorStep.signIn,
+    this.authenticatorBuilder,
+    this.padding = const EdgeInsets.all(32),
+  })  : _routerInfo = routerInfo,
+        super(key: key) {
+    // ignore: prefer_asserts_with_message
+    assert(() {
+      if (!validInitialAuthenticatorSteps.contains(initialStep)) {
+        throw FlutterError.fromParts([
+          ErrorSummary('Invalid initialStep'),
+          ErrorDescription(
+            'initialStep must be one of the following values: \n - ${validInitialAuthenticatorSteps.join('\n -')}',
+          )
+        ]);
+      }
+      return true;
+    }());
+  }
+
+  /// Creates an [Authenticator] that is intended to work with
+  /// [MaterialApp.router] and [GoRouter].
+  ///
+  /// ### Example:
+  /// TODO(Jordan-Nelson): Add example
+  /// ```dart
+  ///
+  /// ```
+  Authenticator.withGoRouter({
+    Key? key,
+    required GoRouter routerConfig,
+    String? onSignInLocation,
+    this.signInForm,
+    this.signUpForm,
+    this.confirmSignInNewPasswordForm,
+    this.stringResolver = const AuthStringResolver(),
+    required this.child,
+    this.onException,
+    this.exceptionBannerLocation = ExceptionBannerLocation.auto,
+    this.preferPrivateSession = false,
+    this.initialStep = AuthenticatorStep.signIn,
+    this.authenticatorBuilder,
+    this.padding = const EdgeInsets.all(32),
+  })  : _routerInfo = go_router_utils.buildGoRouterInfo(
+          router: routerConfig,
+          onSignInLocation: onSignInLocation,
+        ),
+        super(key: key) {
     // ignore: prefer_asserts_with_message
     assert(() {
       if (!validInitialAuthenticatorSteps.contains(initialStep)) {
@@ -361,7 +444,13 @@ class Authenticator extends StatefulWidget {
         return _AuthenticatorBody(child: child);
       };
 
-  final AuthenticatorRouterInfo? routerInfo;
+  /// {@macro amplify_authenticator.go_router_utils.go_routes}
+  static List<GoRoute> get goRoutes => go_router_utils.goRoutes;
+
+  /// {@macro amplify_authenticator.go_router_utils.go_router_auth_redirect}
+  static const goRouterAuthRedirect = go_router_utils.goRouterAuthRedirect;
+
+  final AuthenticatorRouterInfo? _routerInfo;
 
   // Padding around each authenticator view
   final EdgeInsets padding;
@@ -492,7 +581,7 @@ class _AuthenticatorState extends State<Authenticator> {
     )..add(AuthLoad(AuthLoadData(context: context)));
     _authenticatorState = AuthenticatorState(
       _stateMachineBloc,
-      widget.routerInfo,
+      widget._routerInfo,
     );
     _subscribeToExceptions();
     _subscribeToInfoMessages();

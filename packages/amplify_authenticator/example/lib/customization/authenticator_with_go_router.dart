@@ -22,9 +22,10 @@ import 'package:go_router/go_router.dart';
 class AuthenticatorWithGoRouter extends StatelessWidget {
   AuthenticatorWithGoRouter({Key? key}) : super(key: key);
 
-  final _router = AuthenticatorGoRouter(
+  final _router = GoRouter(
     initialLocation: '/',
     routes: <GoRoute>[
+      ...Authenticator.goRoutes,
       GoRoute(
         path: '/',
         builder: (BuildContext context, GoRouterState state) {
@@ -33,7 +34,7 @@ class AuthenticatorWithGoRouter extends StatelessWidget {
       ),
       GoRoute(
         path: '/profile',
-        redirect: AuthenticatorGoRouter.authRedirect(),
+        redirect: Authenticator.goRouterAuthRedirect(),
         builder: (BuildContext context, GoRouterState state) {
           return const ProfileScreen();
         },
@@ -43,8 +44,9 @@ class AuthenticatorWithGoRouter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Authenticator(
-      routerInfo: _router.routerInfo,
+    return Authenticator.withGoRouter(
+      routerConfig: _router,
+      onSignInLocation: '/',
       child: MaterialApp.router(
         routerConfig: _router,
         theme: ThemeData.light(),
