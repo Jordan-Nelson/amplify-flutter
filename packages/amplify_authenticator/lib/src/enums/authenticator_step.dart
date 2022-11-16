@@ -93,3 +93,29 @@ const validInitialAuthenticatorSteps = [
   AuthenticatorStep.signUp,
   AuthenticatorStep.resetPassword,
 ];
+
+/// {@template amplify_authenticator.authenticator_step.authenticator_step_url}
+/// Returns the URL associated with the given step.
+/// {@endtemplate}
+extension AuthenticatorStepUrl on AuthenticatorStep {
+  /// {@macro amplify_authenticator.authenticator_step.authenticator_step_url}
+  String get url {
+    switch (this) {
+      case AuthenticatorStep.signUp:
+        return '/auth/sign-up';
+      case AuthenticatorStep.signIn:
+        return '/auth/sign-in';
+      case AuthenticatorStep.confirmSignUp:
+        return '/auth/confirm-sign-up';
+      case AuthenticatorStep.resetPassword:
+        return '/auth/forgot-password';
+      case AuthenticatorStep.confirmResetPassword:
+        return '/auth/reset-password';
+      default:
+        // TODO(Jordan-Nelson): Add remaining routes.
+        throw StateError('Unhandled step: $this');
+    }
+  }
+
+  String get partialUrl => url.replaceFirst('/auth', '');
+}

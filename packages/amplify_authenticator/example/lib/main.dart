@@ -3,6 +3,7 @@ import 'package:amplify_authenticator/amplify_authenticator.dart';
 import 'package:amplify_authenticator_example/customization/authenticator_with_beamer.dart';
 import 'package:amplify_authenticator_example/customization/authenticator_with_go_router.dart';
 import 'package:amplify_authenticator_example/customization/authenticator_with_vrouter.dart';
+import 'package:amplify_authenticator_example/customization/nested_beamer.dart';
 import 'package:amplify_authenticator_example/resolvers/localized_button_resolver.dart';
 import 'package:amplify_authenticator_example/resolvers/localized_country_resolver.dart';
 import 'package:amplify_authenticator_example/resolvers/localized_input_resolver.dart';
@@ -12,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'amplifyconfiguration.dart';
+import 'customization/nested_go_router.dart';
 
 void main() {
   runApp(const MyApp());
@@ -62,7 +64,8 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return AuthenticatorWithGoRouter();
+    return NestedGoRouter();
+    // return NestedBeamer();
   }
 
   // @override

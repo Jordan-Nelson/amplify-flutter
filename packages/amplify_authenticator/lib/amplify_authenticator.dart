@@ -55,12 +55,15 @@ export 'package:amplify_auth_cognito/amplify_auth_cognito.dart'
 export 'package:amplify_flutter/amplify_flutter.dart'
     show PasswordProtectionSettings, PasswordPolicyCharacters;
 
-export 'src/enums/enums.dart' show AuthenticatorStep, Gender;
+export 'src/enums/enums.dart'
+    show AuthenticatorStep, AuthenticatorStepUrl, Gender;
 export 'src/l10n/auth_strings_resolver.dart' hide ButtonResolverKeyType;
 export 'src/models/authenticator_exception.dart';
 export 'src/models/username_input.dart'
     show UsernameType, UsernameInput, UsernameSelection;
+export 'src/router/authenticator_router.dart';
 export 'src/router/authenticator_router_info.dart' show AuthenticatorRouterInfo;
+
 export 'src/screens/authenticator_screen.dart' show AuthenticatorScreen;
 export 'src/state/authenticator_state.dart';
 export 'src/widgets/button.dart'

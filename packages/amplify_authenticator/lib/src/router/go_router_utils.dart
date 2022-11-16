@@ -52,21 +52,21 @@ GoRouterRedirect goRouterAuthRedirect({bool returnTo = true}) {
 // TODO(Jordan-Nelson): Add remaining routes
 final goRoutes = [
   GoRoute(
-    path: AuthenticatorStep.signIn.url,
+    path: '/',
     pageBuilder: (context, state) => NoTransitionPage<void>(
       key: state.pageKey,
       child: const AuthenticatorScreen.signIn(),
     ),
   ),
   GoRoute(
-    path: AuthenticatorStep.signUp.url,
+    path: AuthenticatorStep.signUp.partialUrl,
     pageBuilder: (context, state) => NoTransitionPage<void>(
       key: state.pageKey,
       child: const AuthenticatorScreen.signUp(),
     ),
   ),
   GoRoute(
-    path: AuthenticatorStep.confirmSignUp.url,
+    path: AuthenticatorStep.confirmSignUp.partialUrl,
     redirect: ((context, state) {
       final authenticatorState = AuthenticatorState.of(context);
       if (authenticatorState.username.isEmpty) {
@@ -80,14 +80,14 @@ final goRoutes = [
     ),
   ),
   GoRoute(
-    path: AuthenticatorStep.resetPassword.url,
+    path: AuthenticatorStep.resetPassword.partialUrl,
     pageBuilder: (context, state) => NoTransitionPage<void>(
       key: state.pageKey,
       child: const AuthenticatorScreen.resetPassword(),
     ),
   ),
   GoRoute(
-    path: AuthenticatorStep.confirmResetPassword.url,
+    path: AuthenticatorStep.confirmResetPassword.partialUrl,
     pageBuilder: (context, state) => NoTransitionPage<void>(
       key: state.pageKey,
       child: const AuthenticatorScreen.confirmResetPassword(),
@@ -128,28 +128,4 @@ String _addReturnToParamToUrl({required String url, required GoRouter router}) {
     return '$url?return_to=$returnToUrl';
   }
   return url;
-}
-
-/// {@template amplify_authenticator.go_router_utils.authenticator_step_url}
-/// Returns the URL associated with the given step.
-/// {@endtemplate}
-extension AuthenticatorStepUrl on AuthenticatorStep {
-  /// {@macro amplify_authenticator.go_router_utils.authenticator_step_url}
-  String get url {
-    switch (this) {
-      case AuthenticatorStep.signUp:
-        return '/sign-up';
-      case AuthenticatorStep.signIn:
-        return '/sign-in';
-      case AuthenticatorStep.confirmSignUp:
-        return '/confirm-sign-up';
-      case AuthenticatorStep.resetPassword:
-        return '/forgot-password';
-      case AuthenticatorStep.confirmResetPassword:
-        return '/reset-password';
-      default:
-        // TODO(Jordan-Nelson): Add remaining routes.
-        throw StateError('Unhandled step: $this');
-    }
-  }
 }
