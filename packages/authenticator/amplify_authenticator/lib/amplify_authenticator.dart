@@ -29,7 +29,7 @@ import 'package:amplify_authenticator/src/l10n/auth_strings_resolver.dart';
 import 'package:amplify_authenticator/src/l10n/authenticator_localizations.dart';
 import 'package:amplify_authenticator/src/models/authenticator_builder.dart';
 import 'package:amplify_authenticator/src/models/authenticator_exception.dart';
-import 'package:amplify_authenticator/src/router/authenticator_router_info.dart';
+import 'package:amplify_authenticator/src/router/authenticator_router_config.dart';
 import 'package:amplify_authenticator/src/router/go_router_utils.dart'
     as go_router_utils;
 import 'package:amplify_authenticator/src/screens/authenticator_screen.dart';
@@ -60,7 +60,13 @@ export 'src/l10n/auth_strings_resolver.dart' hide ButtonResolverKeyType;
 export 'src/models/authenticator_exception.dart';
 export 'src/models/username_input.dart'
     show UsernameType, UsernameInput, UsernameSelection;
-export 'src/router/authenticator_router_info.dart' show AuthenticatorRouterInfo;
+export 'src/router/authenticator_router_config.dart'
+    show AuthenticatorRouterConfig;
+export 'src/router/go_router_utils.dart'
+    show
+        goRouterAuthRedirect,
+        goRouterAuthRedirectForStep,
+        authenticatorGoRoutes;
 export 'src/screens/authenticator_screen.dart' show AuthenticatorScreen;
 export 'src/state/authenticator_state.dart';
 export 'src/widgets/button.dart'
@@ -347,9 +353,9 @@ class Authenticator extends StatefulWidget {
   /// ```dart
   ///
   /// ```
-  Authenticator.withRouter({
+  Authenticator.router({
     Key? key,
-    required AuthenticatorRouterInfo routerInfo,
+    required AuthenticatorRouterConfig routerInfo,
     this.signInForm,
     this.signUpForm,
     this.confirmSignInNewPasswordForm,
@@ -385,10 +391,10 @@ class Authenticator extends StatefulWidget {
   /// ```dart
   ///
   /// ```
-  Authenticator.withGoRouter({
+  Authenticator.goRouter({
     Key? key,
     required GoRouter routerConfig,
-    String? onSignInLocation,
+    String onSignInLocation = '/',
     this.signInForm,
     this.signUpForm,
     this.confirmSignInNewPasswordForm,
@@ -444,13 +450,7 @@ class Authenticator extends StatefulWidget {
         return _AuthenticatorBody(child: child);
       };
 
-  /// {@macro amplify_authenticator.go_router_utils.go_routes}
-  static List<GoRoute> get goRoutes => go_router_utils.goRoutes;
-
-  /// {@macro amplify_authenticator.go_router_utils.go_router_auth_redirect}
-  static const goRouterAuthRedirect = go_router_utils.goRouterAuthRedirect;
-
-  final AuthenticatorRouterInfo? _routerInfo;
+  final AuthenticatorRouterConfig? _routerInfo;
 
   // Padding around each authenticator view
   final EdgeInsets padding;

@@ -42,11 +42,7 @@ class AuthenticatorState extends ChangeNotifier {
     _authBloc.stream.distinct().listen((event) {
       resetCode();
       if (event is AuthenticatedState) {
-        if (event.context != null &&
-            !event.initialRoute &&
-            _routerInfo != null) {
-          _routerInfo!.onSignIn(event.context!);
-        }
+        _handleSignInRouteChange(event, _routerInfo);
         _resetAttributes();
       }
     });
@@ -59,9 +55,21 @@ class AuthenticatorState extends ChangeNotifier {
     });
   }
 
+  void _handleSignInRouteChange(
+    AuthenticatedState event,
+    AuthenticatorRouterConfig? config,
+  ) {
+    final context = event.context;
+    final initialRoute = event.initialRoute;
+    if (initialRoute || context == null || config == null) return;
+    final getReturnToParam = config.getReturnToParam ?? (_) => null;
+    final url = getReturnToParam(context) ?? config.onSignInLocation;
+    config.onRouteChange(context, url);
+  }
+
   final StateMachineBloc _authBloc;
 
-  final AuthenticatorRouterInfo? _routerInfo;
+  final AuthenticatorRouterConfig? _routerInfo;
 
   /// The current step of the authentication flow (signIn, signUp, confirmSignUp, etc.)
   AuthenticatorStep get currentStep {
@@ -75,12 +83,6 @@ class AuthenticatorState extends ChangeNotifier {
     }
   }
 
-  // TODO(Jordan-Nelson): Investigate bug with `listen: true`.
-  // This was causing an issue with go_router when navigating directly to a
-  // route with a guard while authenticated.
-  static AuthenticatorState of(BuildContext context) =>
-      InheritedAuthenticatorState.of(context, listen: false);
-
   Future<bool> isAuthenticated() async {
     final state = await _authBloc.stream.firstWhere(
       (state) => (state is! LoadingState),
@@ -90,6 +92,62 @@ class AuthenticatorState extends ChangeNotifier {
     }
     return true;
   }
+
+  /// A utility for building route guards for [AuthenticatorScreen] Widgets.
+  ///
+  /// {@template amplify_authenticator.authenticator_state.redirect_url_for_step}
+  /// If the user is not eligible for the [step] provided, this will return a
+  /// url that they should be redirected to.
+  ///
+  /// If the user is currently authenticated, this will be
+  /// [AuthenticatorRouterConfig.onSignInLocation].
+  /// {@endtemplate}
+  Future<String?> getRedirectUrlForStep(AuthenticatorStep step) async {
+    final isAuthenticated = await this.isAuthenticated();
+    if (isAuthenticated) return _routerInfo?.onSignInLocation ?? '/';
+    switch (step) {
+      // Allow direct links (deep links) to signUp, signIn, and resetPassword.
+      case AuthenticatorStep.signUp:
+      case AuthenticatorStep.signIn:
+      case AuthenticatorStep.resetPassword:
+        return null;
+
+      /// Only allow navigating to other steps if the step being navigated to
+      /// matches the current step.
+      default:
+        return step == currentStep ? AuthenticatorStep.signIn.url : null;
+    }
+  }
+
+  /// A utility for building route guards for routes that should require
+  /// authentication.
+  ///
+  /// {@template amplify_authenticator.authenticator_state.redirect_url}
+  /// If the current user is unauthenticated, returns a url that the user should
+  /// be redirected to.
+  ///
+  /// For example, if an unauthenticated user tries to route to a [toUrl] of
+  /// '/settings', the return value will be '/sign-in?return_to=/settings'.
+  ///
+  /// [returnTo] can be set to false if the return to url should not be
+  /// tracked. In this case, the user will be redirected to the default route
+  /// after authenticating.
+  /// {@endtemplate}
+  Future<String?> getRedirectUrl({
+    required String? toUrl,
+    bool returnTo = true,
+  }) async {
+    final isAuthenticated = await this.isAuthenticated();
+    if (isAuthenticated) return null;
+    final params = returnTo && toUrl != null ? '?return_to=$toUrl' : null;
+    return '${AuthenticatorStep.signIn.url}$params';
+  }
+
+  // TODO(Jordan-Nelson): Investigate bug with `listen: true`.
+  // This was causing an issue with go_router when navigating directly to a
+  // route with a guard while authenticated.
+  static AuthenticatorState of(BuildContext context) =>
+      InheritedAuthenticatorState.of(context, listen: false);
 
   /// Indicates if the form is currently in a loading state
   ///
@@ -550,7 +608,12 @@ class AuthenticatorState extends ChangeNotifier {
     bool reset = true,
   }) {
     if (_routerInfo != null) {
-      _routerInfo!.onStepChange(context, step);
+      final fullUrl = _addReturnToParamToUrl(
+        url: step.url,
+        config: _routerInfo!,
+        context: context,
+      );
+      _routerInfo!.onRouteChange(context, fullUrl);
     }
     final data = AuthChangeScreenData(context: context, step: step);
     _authBloc.add(AuthChangeScreen(data));
@@ -559,6 +622,33 @@ class AuthenticatorState extends ChangeNotifier {
     if (reset) {
       _resetAttributes();
     }
+  }
+
+  /// Gets the `return_to` query param from the URL.
+  // String? _getReturnToUrl(
+  //   AuthenticatorRouterConfig config,
+  //   BuildContext context,
+  // ) {
+  //   if (config.getLocation == null) {
+  //     return null;
+  //   }
+  //   final fullUrl = config.getLocation!(context);
+  //   return Uri.tryParse('https://example.com${fullUrl}')
+  //       ?.queryParameters['return_to'];
+  // }
+
+  /// Adds the `return_to` query param if the previous route contained it.
+  String _addReturnToParamToUrl({
+    required String url,
+    required AuthenticatorRouterConfig config,
+    required BuildContext context,
+  }) {
+    final getReturnToParam = config.getReturnToParam ?? (_) => null;
+    final returnToUrl = getReturnToParam(context);
+    if (returnToUrl != null) {
+      return '$url?return_to=$returnToUrl';
+    }
+    return url;
   }
 
   /// Reset the authentication flow if initiated

@@ -23,18 +23,24 @@ class AuthenticatorWithGoRouter extends StatelessWidget {
   AuthenticatorWithGoRouter({Key? key}) : super(key: key);
 
   final _router = GoRouter(
-    initialLocation: '/',
+    initialLocation: '/home',
     routes: <GoRoute>[
-      ...Authenticator.goRoutes,
+      // A list of [GoRoute] objects, one for each [AuthenticatorStep].
+      ...authenticatorGoRoutes,
       GoRoute(
-        path: '/',
+        path: '/home',
         builder: (BuildContext context, GoRouterState state) {
           return const HomeScreen();
         },
       ),
       GoRoute(
         path: '/profile',
-        redirect: Authenticator.goRouterAuthRedirect(),
+        // A [GoRouterRedirect] that will redirect unauthenticated users.
+        //
+        // If an unauthenticated user tries to route to '/profile' they will be
+        // redirected to '/sign-in?return_to=/profile'. After authenticating,
+        // they will be taken to '/profile'.
+        redirect: goRouterAuthRedirect(),
         builder: (BuildContext context, GoRouterState state) {
           return const ProfileScreen();
         },
@@ -44,14 +50,14 @@ class AuthenticatorWithGoRouter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Authenticator.withGoRouter(
+    // An [Authenticator] that accepts a [GoRouter] object. This object is used
+    // to route the user to new locations from within the authenticator.
+    return Authenticator.goRouter(
       routerConfig: _router,
-      onSignInLocation: '/',
+      // The default location to route the user to after sign in.
+      onSignInLocation: '/home',
       child: MaterialApp.router(
         routerConfig: _router,
-        theme: ThemeData.light(),
-        darkTheme: ThemeData.dark(),
-        themeMode: ThemeMode.dark,
       ),
     );
   }

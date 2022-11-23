@@ -14,56 +14,83 @@
  */
 
 import 'package:amplify_authenticator/amplify_authenticator.dart';
+import 'package:amplify_flutter/amplify_flutter.dart';
 
 import 'package:flutter/material.dart';
 import 'package:vrouter/vrouter.dart';
 
-// A custom authenticator widget that uses Go Router.
-class AuthenticatorWithVRouter extends StatelessWidget {
-  const AuthenticatorWithVRouter({Key? key}) : super(key: key);
+/// Returns a [VGuard.beforeEnter] hook for routes that require authentication
+/// based on the current [BuildContext].
+///
+/// A redirect will be performed if the user is not authenticated.
+Future<void> Function(VRedirector) vRouterAuthRedirect(BuildContext context) {
+  return (VRedirector redirector) async {
+    final state = AuthenticatorState.of(context);
+    final redirectUrl = await state.getRedirectUrl(toUrl: redirector.toUrl);
+    if (redirectUrl != null) redirector.to(redirectUrl);
+  };
+}
+
+/// Returns a [VGuard.beforeEnter] hook for routes that display an
+/// [AuthenticatorScreen] widget.
+///
+/// A redirect will be performed if the user is not eligible for the given step.
+Future<void> Function(VRedirector) vRouterRedirectForAuthStep({
+  required BuildContext context,
+  required AuthenticatorStep step,
+}) {
+  return (VRedirector redirector) async {
+    final state = AuthenticatorState.of(context);
+    final redirectUrl = await state.getRedirectUrlForStep(step);
+    if (redirectUrl != null) redirector.to(redirectUrl);
+  };
+}
+
+/// Returns a list of [VRouteElement] widgets, one for each [AuthenticatorStep].
+List<VRouteElement> buildAuthenticatorRoutes(BuildContext context) => [
+      for (final step in AuthenticatorStep.values)
+        VGuard(
+          beforeEnter: vRouterRedirectForAuthStep(context: context, step: step),
+          stackedRoutes: [
+            VWidget(
+              path: step.url,
+              widget: AuthenticatorScreen(step: step),
+            ),
+          ],
+        ),
+    ];
+
+/// A [AuthenticatorRouterConfig] using [VRouter] to provide routing behavior.
+final authenticatorRouterConfig = AuthenticatorRouterConfig(
+  onRouteChange: (context, url) => context.vRouter.to(url),
+
+  /// Returns the value of the "return_to" query param. If provided, the
+  /// authenticator will track what URL to return to after authentication.
+  getReturnToParam: (context) {
+    return context.vRouter.queryParameters['return_to'];
+  },
+);
+
+class AuthenticatorWithVrouter extends StatelessWidget {
+  const AuthenticatorWithVrouter({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Authenticator.withRouter(
-      // Customer needs to provide `routerInfo` so that the authenticator
-      // knows how to handle signIn, and onStepChange
-      routerInfo: AuthenticatorRouterInfo(
-        onSignIn: (BuildContext context) {
-          return context.vRouter.to('/');
-        },
-        onStepChange: (context, step) {
-          switch (step) {
-            case AuthenticatorStep.signUp:
-              return context.vRouter.to('/sign-up');
-            case AuthenticatorStep.signIn:
-              return context.vRouter.to('/sign-in');
-            case AuthenticatorStep.confirmSignUp:
-              return context.vRouter.to('/confirm-sign-up');
-            case AuthenticatorStep.resetPassword:
-              return context.vRouter.to('/forgot-password');
-            case AuthenticatorStep.confirmResetPassword:
-              return context.vRouter.to('/confirm-forgot-password');
-            default:
-              throw StateError('Unhandled step: $step');
-          }
-        },
-      ),
-      // Note: Builder is needed to get AuthenticatorState.
+    return Authenticator.router(
+      routerInfo: authenticatorRouterConfig,
+      // Note: Builder is needed to get the current BuildContext because VRouter
+      // does not make this available in redirects.
       child: Builder(
         builder: (context) {
-          final authState = AuthenticatorState.of(context);
           return VRouter(
             routes: [
+              ...buildAuthenticatorRoutes(context),
               VWidget(
-                path: '/',
+                path: '/home',
                 widget: const HomeScreen(),
               ),
               VGuard(
-                // if not authenticated, redirect to sign in
-                beforeEnter: (vRedirector) async {
-                  final isAuthenticated = await authState.isAuthenticated();
-                  if (!isAuthenticated) vRedirector.to('/sign-in');
-                },
+                beforeEnter: vRouterAuthRedirect(context),
                 stackedRoutes: [
                   VWidget(
                     path: '/profile',
@@ -71,54 +98,7 @@ class AuthenticatorWithVRouter extends StatelessWidget {
                   ),
                 ],
               ),
-              // User needs to define all the routes for the Authenticator, and
-              // route guards. They can use Widgets and utils from the
-              // Authenticator to make this easier, but it is still a fair
-              // amount of configuration.
-              VGuard(
-                // if already authenticated, redirect to "/"
-                beforeEnter: (vRedirector) async {
-                  final isAuthenticated = await authState.isAuthenticated();
-                  if (isAuthenticated) vRedirector.to('/');
-                },
-                stackedRoutes: [
-                  VWidget(
-                    path: '/sign-up',
-                    widget: const AuthenticatorScreen.signUp(),
-                  ),
-                  VWidget(
-                    path: '/sign-in',
-                    widget: const AuthenticatorScreen.signIn(),
-                  ),
-                  VWidget(
-                    path: '/forgot-password',
-                    widget: const AuthenticatorScreen.resetPassword(),
-                  ),
-                  VGuard(
-                    // if AuthenticatorState has no username, redirect to sign-in
-                    beforeEnter: (vRedirector) async {
-                      if (authState.username.isEmpty) {
-                        vRedirector.to('/sign-in');
-                      }
-                    },
-                    stackedRoutes: [
-                      VWidget(
-                        path: '/confirm-sign-up',
-                        widget: const AuthenticatorScreen.confirmSignUp(),
-                      ),
-                      VWidget(
-                        path: '/confirm-forgot-password',
-                        widget:
-                            const AuthenticatorScreen.confirmResetPassword(),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
             ],
-            theme: ThemeData.light(),
-            darkTheme: ThemeData.dark(),
-            themeMode: ThemeMode.dark,
           );
         },
       ),
@@ -163,6 +143,16 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             children: [
               const Text('You are logged in.'),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  Amplify.Auth.updateUserAttribute(
+                    userAttributeKey: CognitoUserAttributeKey.email,
+                    value: '',
+                  );
+                },
+                child: const Text('Update email'),
+              ),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: () => context.vRouter.to('/'),

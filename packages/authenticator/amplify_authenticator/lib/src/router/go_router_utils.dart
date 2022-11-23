@@ -13,143 +13,64 @@
 // limitations under the License.
 
 import 'package:amplify_authenticator/src/enums/authenticator_step.dart';
-import 'package:amplify_authenticator/src/router/authenticator_router_info.dart';
+import 'package:amplify_authenticator/src/router/authenticator_router_config.dart';
 import 'package:amplify_authenticator/src/screens/authenticator_screen.dart';
 import 'package:amplify_authenticator/src/state/authenticator_state.dart';
 import 'package:flutter/widgets.dart';
 
 import 'package:go_router/go_router.dart';
 
-/// {@template amplify_authenticator.go_router_utils.go_router_auth_redirect}
-/// Creates a [GoRouterRedirect] that may redirect the user based on their
-/// current Authentication state.
+/// A [GoRouterRedirect] for routes that required authentication.
 ///
-/// If the user is not authenticated, they will be redirected to the
-/// Authenticator. Otherwise, they will not be redirected.
-///
-/// By default, a `return_to` parameter will be added to the URI to take the
-/// user back to the original route after they are authenticated. This can be
-/// disabled with [returnTo].
-/// {@endtemplate}
+/// {@macro amplify_authenticator.authenticator_state.redirect_url}
 GoRouterRedirect goRouterAuthRedirect({bool returnTo = true}) {
-  return (
-    BuildContext context,
-    GoRouterState state,
-  ) async {
-    final authenticatorState = AuthenticatorState.of(context);
-    final isAuthenticated = await authenticatorState.isAuthenticated();
-    if (isAuthenticated) {
-      return null;
-    }
-    final params = returnTo ? '?return_to=${state.location}' : null;
-    return '${AuthenticatorStep.signIn.url}$params';
+  return (BuildContext context, GoRouterState state) {
+    final authState = AuthenticatorState.of(context);
+    return authState.getRedirectUrl(toUrl: state.location, returnTo: returnTo);
   };
 }
 
-/// {@template amplify_authenticator.go_router_utils.go_routes}
-/// A list of routes for the Authenticator to be used with [GoRouter].
-/// {@endtemplate}
-// TODO(Jordan-Nelson): Add remaining routes
-final goRoutes = [
-  GoRoute(
-    path: AuthenticatorStep.signIn.url,
-    pageBuilder: (context, state) => NoTransitionPage<void>(
-      key: state.pageKey,
-      child: const AuthenticatorScreen.signIn(),
+/// A [GoRouterRedirect] for [AuthenticatorScreen] widgets.
+///
+/// {@macro amplify_authenticator.authenticator_state.redirect_url_for_step}
+GoRouterRedirect goRouterAuthRedirectForStep({
+  required AuthenticatorStep step,
+}) {
+  return (BuildContext context, GoRouterState goRouterState) {
+    final authState = AuthenticatorState.of(context);
+    return authState.getRedirectUrlForStep(step);
+  };
+}
+
+/// A list of [GoRoute] objects for each [AuthenticatorStep].
+final authenticatorGoRoutes = [
+  for (final step in AuthenticatorStep.values)
+    GoRoute(
+      path: step.url,
+      redirect: goRouterAuthRedirectForStep(step: step),
+      pageBuilder: (context, state) => NoTransitionPage<void>(
+        key: state.pageKey,
+        child: AuthenticatorScreen(step: step),
+      ),
     ),
-  ),
-  GoRoute(
-    path: AuthenticatorStep.signUp.url,
-    pageBuilder: (context, state) => NoTransitionPage<void>(
-      key: state.pageKey,
-      child: const AuthenticatorScreen.signUp(),
-    ),
-  ),
-  GoRoute(
-    path: AuthenticatorStep.confirmSignUp.url,
-    redirect: ((context, state) {
-      final authenticatorState = AuthenticatorState.of(context);
-      if (authenticatorState.username.isEmpty) {
-        return AuthenticatorStep.signUp.url;
-      }
-      return state.location;
-    }),
-    pageBuilder: (context, state) => NoTransitionPage<void>(
-      key: state.pageKey,
-      child: const AuthenticatorScreen.confirmSignUp(),
-    ),
-  ),
-  GoRoute(
-    path: AuthenticatorStep.resetPassword.url,
-    pageBuilder: (context, state) => NoTransitionPage<void>(
-      key: state.pageKey,
-      child: const AuthenticatorScreen.resetPassword(),
-    ),
-  ),
-  GoRoute(
-    path: AuthenticatorStep.confirmResetPassword.url,
-    pageBuilder: (context, state) => NoTransitionPage<void>(
-      key: state.pageKey,
-      child: const AuthenticatorScreen.confirmResetPassword(),
-    ),
-  ),
 ];
 
-/// Creates a [AuthenticatorRouterInfo] object given the required [router] and
+/// Creates a [AuthenticatorRouterConfig] object given the required [router] and
 /// optional [onSignInLocation].
 ///
 /// If [onSignInLocation] is provided, it will be used as the location to route
 /// the user to after sign in.
-AuthenticatorRouterInfo buildGoRouterInfo({
+AuthenticatorRouterConfig buildGoRouterInfo({
   required GoRouter router,
-  String? onSignInLocation = '/',
+  String onSignInLocation = '/',
 }) {
-  return AuthenticatorRouterInfo(
-    onStepChange: (BuildContext context, AuthenticatorStep step) {
-      final newUrl = _addReturnToParamToUrl(url: step.url, router: router);
-      GoRouter.of(context).go(newUrl);
+  return AuthenticatorRouterConfig(
+    onRouteChange: (BuildContext context, String url) =>
+        GoRouter.of(context).go(url),
+    getReturnToParam: (context) {
+      final location = GoRouter.of(context).location;
+      return Uri.tryParse(location)?.queryParameters['return_to'];
     },
-    onSignIn: (BuildContext context) {
-      final returnToUrl = _getReturnToUrl(router) ?? onSignInLocation ?? '/';
-      return router.go(returnToUrl);
-    },
+    onSignInLocation: onSignInLocation,
   );
-}
-
-/// Gets the `return_to` query param from the URL.
-String? _getReturnToUrl(GoRouter router) =>
-    Uri.tryParse('https://example.com${router.location}')
-        ?.queryParameters['return_to'];
-
-/// Adds the `return_to` query param if the previous route contained it.
-String _addReturnToParamToUrl({required String url, required GoRouter router}) {
-  final returnToUrl = _getReturnToUrl(router);
-  if (returnToUrl != null) {
-    return '$url?return_to=$returnToUrl';
-  }
-  return url;
-}
-
-/// {@template amplify_authenticator.go_router_utils.authenticator_step_url}
-/// Returns the URL associated with the given step.
-/// {@endtemplate}
-extension AuthenticatorStepUrl on AuthenticatorStep {
-  /// {@macro amplify_authenticator.go_router_utils.authenticator_step_url}
-  String get url {
-    switch (this) {
-      case AuthenticatorStep.signUp:
-        return '/sign-up';
-      case AuthenticatorStep.signIn:
-        return '/sign-in';
-      case AuthenticatorStep.confirmSignUp:
-        return '/confirm-sign-up';
-      case AuthenticatorStep.resetPassword:
-        return '/forgot-password';
-      case AuthenticatorStep.confirmResetPassword:
-        return '/reset-password';
-      default:
-        // TODO(Jordan-Nelson): Add remaining routes.
-        throw StateError('Unhandled step: $this');
-    }
-  }
 }

@@ -103,13 +103,15 @@ class AuthenticatorScreen extends StatelessAuthenticatorComponent {
       double mobileWidth = MediaQuery.of(context).size.width;
       containerWidth = mobileWidth;
 
-      child = SingleChildScrollView(
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.all(containerPadding),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: containerWidth),
-              child: SafeArea(child: child),
+      child = Scaffold(
+        body: SingleChildScrollView(
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.all(containerPadding),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: containerWidth),
+                child: SafeArea(child: child),
+              ),
             ),
           ),
         ),
@@ -118,7 +120,7 @@ class AuthenticatorScreen extends StatelessAuthenticatorComponent {
       containerWidth = AuthenticatorContainerConstants.mediumWidth;
 
       child = Container(
-        color: Theme.of(context).backgroundColor,
+        color: Theme.of(context).scaffoldBackgroundColor,
         child: Center(
           child: SingleChildScrollView(
             child: Row(

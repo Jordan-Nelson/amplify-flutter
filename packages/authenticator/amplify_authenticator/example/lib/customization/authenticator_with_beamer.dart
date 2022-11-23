@@ -33,48 +33,20 @@ class AuthenticatorWithBeamer extends StatelessWidget {
             child: ProfileScreen(),
           );
         },
-        '/sign-in': (context, state, data) {
-          return const AuthenticatorScreen.signIn();
-        },
-        '/sign-up': (context, state, data) {
-          return const AuthenticatorScreen.signUp();
-        },
-        '/confirm-sign-up': (context, state, data) {
-          return const AuthenticatorScreen.confirmSignUp();
-        },
-        '/forgot-password': (context, state, data) {
-          return const AuthenticatorScreen.resetPassword();
-        },
-        '/confirm-forgot-password': (context, state, data) {
-          return const AuthenticatorScreen.confirmResetPassword();
-        },
+        for (final step in AuthenticatorStep.values)
+          step.url: (context, state, data) {
+            return AuthenticatorScreen(step: step);
+          }
       },
     ),
   );
 
   @override
   Widget build(BuildContext context) {
-    return Authenticator.withRouter(
-      routerInfo: AuthenticatorRouterInfo(
-        onSignIn: (BuildContext context) {
-          return Beamer.of(context).beamToNamed('/profile');
-        },
-        onStepChange: (context, step) {
-          switch (step) {
-            case AuthenticatorStep.signUp:
-              return Beamer.of(context).beamToNamed('/sign-up');
-            case AuthenticatorStep.signIn:
-              return Beamer.of(context).beamToNamed('/sign-in');
-            case AuthenticatorStep.confirmSignUp:
-              return Beamer.of(context).beamToNamed('/confirm-sign-up');
-            case AuthenticatorStep.resetPassword:
-              return Beamer.of(context).beamToNamed('/forgot-password');
-            case AuthenticatorStep.confirmResetPassword:
-              return Beamer.of(context).beamToNamed('/confirm-forgot-password');
-            default:
-              throw StateError('Unhandled step: $step');
-          }
-        },
+    return Authenticator.router(
+      routerInfo: AuthenticatorRouterConfig(
+        onSignInLocation: '/profile',
+        onRouteChange: (context, url) => Beamer.of(context).beamToNamed(url),
       ),
       child: MaterialApp.router(
         routeInformationParser: BeamerParser(),
