@@ -25,7 +25,7 @@ dependencies:
     path: ../../../amplify/amplify_flutter
   flutter:
     sdk: flutter
-  go_router: ^3.0.0
+  go_router: ^5.0.0
 
 dev_dependencies:
   amplify_auth_cognito_dart:
@@ -35,7 +35,7 @@ dev_dependencies:
   amplify_test:
     path: ../../../amplify_test
   async: ^2.8.0
-  aws_signature_v4: 
+  aws_signature_v4:
     path: ../../../aws_signature_v4
   collection: any
   flutter_driver:
