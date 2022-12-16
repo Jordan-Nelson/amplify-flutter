@@ -22,7 +22,6 @@ import 'dart:async';
 
 import 'package:amplify_authenticator/src/blocs/auth/auth_bloc.dart';
 import 'package:amplify_authenticator/src/blocs/auth/auth_data.dart';
-import 'package:amplify_authenticator/src/constants/authenticator_constants.dart';
 import 'package:amplify_authenticator/src/enums/enums.dart';
 import 'package:amplify_authenticator/src/keys.dart';
 import 'package:amplify_authenticator/src/l10n/auth_strings_resolver.dart';
@@ -43,7 +42,6 @@ import 'package:amplify_authenticator/src/state/inherited_authenticator_state.da
 import 'package:amplify_authenticator/src/state/inherited_config.dart';
 import 'package:amplify_authenticator/src/state/inherited_forms.dart';
 import 'package:amplify_authenticator/src/state/inherited_strings.dart';
-import 'package:amplify_authenticator/src/widgets/authenticator_banner.dart';
 import 'package:amplify_authenticator/src/widgets/form.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/foundation.dart';
@@ -551,9 +549,6 @@ class Authenticator extends StatefulWidget {
 }
 
 class _AuthenticatorState extends State<Authenticator> {
-  static final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
-  static final _logger = AmplifyLogger().createChild('Authenticator');
-
   final AuthService _authService = AmplifyAuthService();
   late final StateMachineBloc _stateMachineBloc;
   late final AuthenticatorState _authenticatorState;
@@ -582,94 +577,7 @@ class _AuthenticatorState extends State<Authenticator> {
       _stateMachineBloc,
       widget._routerInfo,
     );
-    _subscribeToExceptions();
-    _subscribeToInfoMessages();
-    _subscribeToSuccessEvents();
     _waitForConfiguration();
-  }
-
-  void _subscribeToExceptions() {
-    _exceptionSub = _stateMachineBloc.exceptions.listen((exception) {
-      var onException = widget.onException;
-      if (onException != null) {
-        onException(exception);
-      } else {
-        _logger.error('Error in AuthBloc', exception);
-      }
-      if (mounted && exception.showBanner) {
-        _showExceptionBanner(
-          type: StatusType.error,
-          message: exception.message,
-        );
-      }
-    });
-  }
-
-  void _subscribeToInfoMessages() {
-    final resolver = widget.stringResolver.messages;
-    _infoSub = _stateMachineBloc.infoMessages.listen((key) {
-      final context = scaffoldMessengerKey.currentContext;
-      if (mounted && context != null) {
-        final message = resolver.resolve(context, key);
-        _logger.info(message);
-        _showExceptionBanner(
-          type: StatusType.info,
-          message: message,
-        );
-      } else {
-        _logger.info('Could not show banner for key: $key');
-      }
-    });
-  }
-
-  void _showExceptionBanner({
-    required StatusType type,
-    required String message,
-  }) {
-    final scaffoldMessengerState = scaffoldMessengerKey.currentState;
-    final scaffoldMessengerContext = scaffoldMessengerKey.currentContext;
-    if (scaffoldMessengerState == null || scaffoldMessengerContext == null) {
-      return;
-    }
-    var location = widget.exceptionBannerLocation;
-    if (location == ExceptionBannerLocation.none) {
-      return;
-    }
-    if (location == ExceptionBannerLocation.auto) {
-      final Size screenSize = MediaQuery.of(scaffoldMessengerContext).size;
-      final bool isDesktop =
-          screenSize.width > AuthenticatorContainerConstants.smallView;
-      location = isDesktop
-          ? ExceptionBannerLocation.top
-          : ExceptionBannerLocation.bottom;
-    }
-    if (location == ExceptionBannerLocation.top) {
-      scaffoldMessengerState
-        ..clearMaterialBanners()
-        ..showMaterialBanner(createMaterialBanner(
-          scaffoldMessengerContext,
-          type: type,
-          message: message,
-          actionCallback: scaffoldMessengerState.clearMaterialBanners,
-        ));
-    } else {
-      scaffoldMessengerState
-        ..clearSnackBars()
-        ..showSnackBar(createSnackBar(
-          scaffoldMessengerContext,
-          type: type,
-          message: message,
-        ));
-    }
-  }
-
-  // Clear exception and info banners on successful login.
-  void _subscribeToSuccessEvents() {
-    _successSub = _stateMachineBloc.stream.listen((state) {
-      if (state is AuthenticatedState) {
-        scaffoldMessengerKey.currentState?.removeCurrentMaterialBanner();
-      }
-    });
   }
 
   @override
@@ -738,6 +646,8 @@ class _AuthenticatorState extends State<Authenticator> {
       child: InheritedConfig(
         amplifyConfig: _config,
         padding: widget.padding,
+        exceptionBannerLocation: widget.exceptionBannerLocation,
+        onException: widget.onException,
         child: InheritedAuthenticatorState(
           key: keyInheritedAuthenticatorState,
           state: _authenticatorState,
@@ -868,13 +778,8 @@ class _AuthenticatorBody extends StatelessWidget {
           onPopPage: (_, dynamic __) => true,
           pages: [
             MaterialPage<void>(
-              child: ScaffoldMessenger(
-                key: _AuthenticatorState.scaffoldMessengerKey,
-                child: Scaffold(
-                  body: SizedBox.expand(
-                    child: child,
-                  ),
-                ),
+              child: SizedBox.expand(
+                child: child,
               ),
             ),
           ],
@@ -888,7 +793,6 @@ class _AuthenticatorBody extends StatelessWidget {
 /// A widget for wrapping portions of the application (typically routes)
 /// that are intended to be protected by authentication.
 /// {@endtemplate}
-
 class AuthenticatedView extends StatelessWidget {
   /// {@macro amplify_authenticator.authenticated_view}
   const AuthenticatedView({
@@ -907,15 +811,10 @@ class AuthenticatedView extends StatelessWidget {
           if (state is AuthenticatedState) {
             return child;
           }
-          return ScaffoldMessenger(
-            key: _AuthenticatorState.scaffoldMessengerKey,
-            child: Scaffold(
-              body: SizedBox.expand(
-                child: child is AuthenticatorScreen
-                    ? SingleChildScrollView(child: child)
-                    : child,
-              ),
-            ),
+          return SizedBox.expand(
+            child: child is AuthenticatorScreen
+                ? SingleChildScrollView(child: child)
+                : child,
           );
         },
       ),

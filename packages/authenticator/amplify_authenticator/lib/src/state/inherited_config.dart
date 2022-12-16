@@ -13,6 +13,7 @@
  * permissions and limitations under the License.
  */
 
+import 'package:amplify_authenticator/src/models/authenticator_exception.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -22,11 +23,19 @@ class InheritedConfig extends InheritedWidget {
     Key? key,
     required this.amplifyConfig,
     required this.padding,
+    required this.exceptionBannerLocation,
+    this.onException,
     required Widget child,
   }) : super(key: key, child: child);
 
   final AmplifyConfig? amplifyConfig;
   final EdgeInsets padding;
+
+  /// {@macro amplify_authenticator.exception_handler}
+  final ExceptionHandler? onException;
+
+  /// {@macro amplify_authenticator.exception_banner_location}
+  final ExceptionBannerLocation exceptionBannerLocation;
 
   static InheritedConfig of(BuildContext context) {
     final inheritedConfig =

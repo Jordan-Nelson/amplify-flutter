@@ -13,17 +13,25 @@
  * permissions and limitations under the License.
  */
 
+import 'dart:async';
+
 import 'package:amplify_authenticator/amplify_authenticator.dart';
+import 'package:amplify_authenticator/src/blocs/auth/auth_bloc.dart';
 import 'package:amplify_authenticator/src/constants/authenticator_constants.dart';
+import 'package:amplify_authenticator/src/enums/enums.dart';
+import 'package:amplify_authenticator/src/state/auth_state.dart';
+import 'package:amplify_authenticator/src/state/inherited_auth_bloc.dart';
 import 'package:amplify_authenticator/src/state/inherited_config.dart';
 import 'package:amplify_authenticator/src/state/inherited_forms.dart';
+import 'package:amplify_authenticator/src/widgets/authenticator_banner.dart';
 import 'package:amplify_authenticator/src/widgets/component.dart';
+import 'package:amplify_core/amplify_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../utils/breakpoint.dart';
 
-class AuthenticatorScreen extends StatelessAuthenticatorComponent {
+class AuthenticatorScreen extends AuthenticatorComponent<AuthenticatorScreen> {
   const AuthenticatorScreen({
     Key? key,
     required this.step,
@@ -59,11 +67,127 @@ class AuthenticatorScreen extends StatelessAuthenticatorComponent {
   final AuthenticatorStep step;
 
   @override
-  Widget builder(
-    BuildContext context,
-    AuthenticatorState state,
-    AuthStringResolver stringResolver,
-  ) {
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties.add(EnumProperty<AuthenticatorStep>('step', step));
+  }
+
+  @override
+  AuthenticatorComponentState<AuthenticatorScreen> createState() {
+    return _AuthenticatorScreenState();
+  }
+}
+
+class _AuthenticatorScreenState
+    extends AuthenticatorComponentState<AuthenticatorScreen> {
+  static final _logger = AmplifyLogger().createChild('Authenticator');
+
+  StateMachineBloc? _stateMachineBloc;
+  InheritedConfig? _inheritedConfig;
+  late final StreamSubscription<AuthenticatorException> _exceptionSub;
+  late final StreamSubscription<MessageResolverKey> _infoSub;
+  late final StreamSubscription<AuthState> _successSub;
+
+  final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+  void _subscribeToExceptions() {
+    _exceptionSub = _stateMachineBloc!.exceptions.listen((exception) {
+      var onException = _inheritedConfig!.onException;
+      if (onException != null) {
+        onException(exception);
+      } else {
+        _logger.error('Error in AuthBloc', exception);
+      }
+      if (mounted && exception.showBanner) {
+        _showExceptionBanner(
+          type: StatusType.error,
+          message: exception.message,
+        );
+      }
+    });
+  }
+
+  void _subscribeToInfoMessages() {
+    final resolver = stringResolver.messages;
+    _infoSub = _stateMachineBloc!.infoMessages.listen((key) {
+      final context = scaffoldMessengerKey.currentContext;
+      if (mounted && context != null) {
+        final message = resolver.resolve(context, key);
+        _logger.info(message);
+        _showExceptionBanner(
+          type: StatusType.info,
+          message: message,
+        );
+      } else {
+        _logger.info('Could not show banner for key: $key');
+      }
+    });
+  }
+
+  void _showExceptionBanner({
+    required StatusType type,
+    required String message,
+  }) {
+    final scaffoldMessengerState = scaffoldMessengerKey.currentState;
+    final scaffoldMessengerContext = scaffoldMessengerKey.currentContext;
+    if (scaffoldMessengerState == null || scaffoldMessengerContext == null) {
+      return;
+    }
+    var location = _inheritedConfig!.exceptionBannerLocation;
+    if (location == ExceptionBannerLocation.none) {
+      return;
+    }
+    if (location == ExceptionBannerLocation.auto) {
+      final Size screenSize = MediaQuery.of(scaffoldMessengerContext).size;
+      final bool isDesktop =
+          screenSize.width > AuthenticatorContainerConstants.smallView;
+      location = isDesktop
+          ? ExceptionBannerLocation.top
+          : ExceptionBannerLocation.bottom;
+    }
+    if (location == ExceptionBannerLocation.top) {
+      scaffoldMessengerState
+        ..clearMaterialBanners()
+        ..showMaterialBanner(createMaterialBanner(
+          scaffoldMessengerContext,
+          type: type,
+          message: message,
+          actionCallback: scaffoldMessengerState.clearMaterialBanners,
+        ));
+    } else {
+      scaffoldMessengerState
+        ..clearSnackBars()
+        ..showSnackBar(createSnackBar(
+          scaffoldMessengerContext,
+          type: type,
+          message: message,
+        ));
+    }
+  }
+
+  // Clear exception and info banners on successful login.
+  void _subscribeToSuccessEvents() {
+    _successSub = _stateMachineBloc!.stream.listen((state) {
+      if (state is AuthenticatedState) {
+        scaffoldMessengerKey.currentState?.removeCurrentMaterialBanner();
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_stateMachineBloc == null) {
+      _stateMachineBloc = InheritedAuthBloc.of(context);
+      _inheritedConfig = InheritedConfig.of(context);
+      _subscribeToExceptions();
+      _subscribeToInfoMessages();
+      _subscribeToSuccessEvents();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final double containerWidth;
     final breakpoint = Breakpoint.of(context);
     final isMobile = breakpoint == Breakpoint.small;
@@ -72,7 +196,7 @@ class AuthenticatorScreen extends StatelessAuthenticatorComponent {
     const signInUpTabs = [AuthenticatorStep.signIn, AuthenticatorStep.signUp];
 
     Widget child;
-    switch (step) {
+    switch (widget.step) {
       case AuthenticatorStep.onboarding:
       case AuthenticatorStep.signIn:
       case AuthenticatorStep.signUp:
@@ -80,7 +204,7 @@ class AuthenticatorScreen extends StatelessAuthenticatorComponent {
           alignment: Alignment.topCenter,
           child: AuthenticatorTabView(
             tabs: signInUpTabs,
-            initialIndex: step == AuthenticatorStep.signUp ? 1 : 0,
+            initialIndex: widget.step == AuthenticatorStep.signUp ? 1 : 0,
           ),
           duration: const Duration(milliseconds: 200),
         );
@@ -93,7 +217,7 @@ class AuthenticatorScreen extends StatelessAuthenticatorComponent {
       case AuthenticatorStep.confirmResetPassword:
       case AuthenticatorStep.verifyUser:
       case AuthenticatorStep.confirmVerifyUser:
-        child = _FormWrapperView(step: step);
+        child = _FormWrapperView(step: widget.step);
         break;
       case AuthenticatorStep.loading:
         throw StateError('Invalid step: $this');
@@ -103,15 +227,13 @@ class AuthenticatorScreen extends StatelessAuthenticatorComponent {
       double mobileWidth = MediaQuery.of(context).size.width;
       containerWidth = mobileWidth;
 
-      child = Scaffold(
-        body: SingleChildScrollView(
-          child: Center(
-            child: Padding(
-              padding: EdgeInsets.all(containerPadding),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: containerWidth),
-                child: SafeArea(child: child),
-              ),
+      child = SingleChildScrollView(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(containerPadding),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: containerWidth),
+              child: SafeArea(child: child),
             ),
           ),
         ),
@@ -119,34 +241,28 @@ class AuthenticatorScreen extends StatelessAuthenticatorComponent {
     } else {
       containerWidth = AuthenticatorContainerConstants.mediumWidth;
 
-      child = Container(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        child: Center(
-          child: SingleChildScrollView(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: containerWidth),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: containerPadding),
-                    child: Card(child: SafeArea(child: child)),
-                  ),
+      child = Center(
+        child: SingleChildScrollView(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: containerWidth),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: containerPadding),
+                  child: Card(child: SafeArea(child: child)),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       );
     }
 
-    return child;
-  }
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    properties.add(EnumProperty<AuthenticatorStep>('step', step));
+    return ScaffoldMessenger(
+      key: scaffoldMessengerKey,
+      child: Scaffold(body: child),
+    );
   }
 }
 
