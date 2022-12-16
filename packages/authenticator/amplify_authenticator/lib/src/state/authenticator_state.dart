@@ -607,9 +607,9 @@ class AuthenticatorState extends ChangeNotifier {
     required BuildContext context,
     bool reset = true,
   }) {
-    if (_routerInfo != null) {
+    if (_routerInfo != null && step.url != null) {
       final fullUrl = _addReturnToParamToUrl(
-        url: step.url,
+        url: step.url!,
         config: _routerInfo!,
         context: context,
       );
