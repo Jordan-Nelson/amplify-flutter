@@ -15,7 +15,6 @@
 
 import 'package:amplify_authenticator/amplify_authenticator.dart';
 import 'package:beamer/beamer.dart';
-
 import 'package:flutter/material.dart';
 
 // A custom authenticator widget that uses Go Router.
@@ -33,8 +32,8 @@ class AuthenticatorWithBeamer extends StatelessWidget {
             child: ProfileScreen(),
           );
         },
-        for (final step in AuthenticatorStep.values)
-          step.url: (context, state, data) {
+        for (final step in AuthenticatorStep.routerSteps)
+          step.url!: (context, state, data) {
             return AuthenticatorScreen(step: step);
           }
       },

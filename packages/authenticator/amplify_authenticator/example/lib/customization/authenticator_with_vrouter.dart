@@ -14,8 +14,6 @@
  */
 
 import 'package:amplify_authenticator/amplify_authenticator.dart';
-import 'package:amplify_flutter/amplify_flutter.dart';
-
 import 'package:flutter/material.dart';
 import 'package:vrouter/vrouter.dart';
 
@@ -48,12 +46,13 @@ Future<void> Function(VRedirector) vRouterRedirectForAuthStep({
 
 /// Returns a list of [VRouteElement] widgets, one for each [AuthenticatorStep].
 List<VRouteElement> buildAuthenticatorRoutes(BuildContext context) => [
-      for (final step in AuthenticatorStep.values)
+      for (final step in AuthenticatorStep.routerSteps)
         VGuard(
           beforeEnter: vRouterRedirectForAuthStep(context: context, step: step),
           stackedRoutes: [
             VWidget(
               path: step.url,
+              transitionDuration: Duration.zero,
               widget: AuthenticatorScreen(step: step),
             ),
           ],
@@ -62,6 +61,7 @@ List<VRouteElement> buildAuthenticatorRoutes(BuildContext context) => [
 
 /// A [AuthenticatorRouterConfig] using [VRouter] to provide routing behavior.
 final authenticatorRouterConfig = AuthenticatorRouterConfig(
+  onSignInLocation: '/home',
   onRouteChange: (context, url) => context.vRouter.to(url),
 
   /// Returns the value of the "return_to" query param. If provided, the
@@ -83,6 +83,7 @@ class AuthenticatorWithVrouter extends StatelessWidget {
       child: Builder(
         builder: (context) {
           return VRouter(
+            initialUrl: '/home',
             routes: [
               ...buildAuthenticatorRoutes(context),
               VWidget(
@@ -145,17 +146,7 @@ class ProfileScreen extends StatelessWidget {
               const Text('You are logged in.'),
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: () {
-                  Amplify.Auth.updateUserAttribute(
-                    userAttributeKey: CognitoUserAttributeKey.email,
-                    value: '',
-                  );
-                },
-                child: const Text('Update email'),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () => context.vRouter.to('/'),
+                onPressed: () => context.vRouter.to('/home'),
                 child: const Text('Go to Home'),
               ),
               const SizedBox(height: 32),

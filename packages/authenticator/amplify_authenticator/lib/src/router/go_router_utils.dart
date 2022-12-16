@@ -17,7 +17,6 @@ import 'package:amplify_authenticator/src/router/authenticator_router_config.dar
 import 'package:amplify_authenticator/src/screens/authenticator_screen.dart';
 import 'package:amplify_authenticator/src/state/authenticator_state.dart';
 import 'package:flutter/widgets.dart';
-
 import 'package:go_router/go_router.dart';
 
 /// A [GoRouterRedirect] for routes that required authentication.
@@ -44,9 +43,9 @@ GoRouterRedirect goRouterAuthRedirectForStep({
 
 /// A list of [GoRoute] objects for each [AuthenticatorStep].
 final authenticatorGoRoutes = [
-  for (final step in AuthenticatorStep.values)
+  for (final step in AuthenticatorStep.routerSteps)
     GoRoute(
-      path: step.url,
+      path: step.url!,
       redirect: goRouterAuthRedirectForStep(step: step),
       pageBuilder: (context, state) => NoTransitionPage<void>(
         key: state.pageKey,

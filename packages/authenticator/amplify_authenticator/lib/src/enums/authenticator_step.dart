@@ -19,7 +19,7 @@ enum AuthenticatorStep {
   ///
   /// Either Amplify.configure() or the current authentication status
   /// is pending.
-  loading('/sign-in'),
+  loading(),
 
   /// The user is on the Onboarding step.
   ///
@@ -33,63 +33,68 @@ enum AuthenticatorStep {
   /// This step is only relevant if a custom builder is provided to the
   /// Authenticator. The prebuilt authenticator takes users directly to
   /// sign in by default.
-  onboarding('/onboarding'),
+  onboarding(url: '/onboarding'),
 
   /// The user is on the Sign Up step.
-  signUp('/sign-up'),
+  signUp(url: '/sign-up'),
 
   /// The user is on the Sign In step.
-  signIn('/sign-In'),
+  signIn(url: '/sign-in'),
 
   /// The user is on the Confirm Sign Up step.
   ///
   /// The user has signed up, but their account is currently in
   /// an unconfirmed state.
-  confirmSignUp('/confirm-sign-up'),
+  confirmSignUp(url: '/confirm-sign-up'),
 
   /// The user is on the Confirm Sign In (Custom Auth) step.
   ///
   /// The user has performed the initial step of the sign in process,
   /// and should be presented with a form to enter a response to a custom auth challenge.
-  confirmSignInCustomAuth('/confirm-sign-in-custom-challenge'),
+  confirmSignInCustomAuth(url: '/confirm-sign-in-custom-challenge'),
 
   /// The user is on the Confirm Sign In with MFA (Multi-factor
   /// Authentication) step.
   ///
   /// The user has performed the initial step of the sign in process,
   /// and should be presented with a form to enter their confirmation code.
-  confirmSignInMfa('/confirm-sign-in-mfa'),
+  confirmSignInMfa(url: '/confirm-sign-in-mfa'),
 
   /// The user is on the Confirm Sign In with New Password step.
   ///
   /// The user has performed the initial step of the sign in process,
   /// and is required to change their password in order to complete
   /// the sign in process.
-  confirmSignInNewPassword('/confirm-sign-in-new-password'),
+  confirmSignInNewPassword(url: '/confirm-sign-in-new-password'),
 
   /// The user is on the Reset Password step.
-  resetPassword('/reset-password'),
+  resetPassword(url: '/reset-password'),
 
   /// The user is on the Confirm Reset Password step.
-  confirmResetPassword('/confirm-reset-password'),
+  confirmResetPassword(url: '/confirm-reset-password'),
 
   /// The user is on the Verify User step.
   ///
   /// The user has successfully signed in and their account is confirmed,
   /// however they do not have any means of account recovery (email, phone)
   /// that is confirmed.
-  verifyUser('/verify-account'),
+  verifyUser(url: '/verify-account'),
 
   /// The user is on the Confirm Verify User step.
   ///
   /// The user has initiated verification of an account recovery means
   /// (email, phone), and needs to provide a verification code.
-  confirmVerifyUser('/confirm-verify-account');
+  confirmVerifyUser(url: '/confirm-verify-account');
 
-  const AuthenticatorStep(this.url);
+  const AuthenticatorStep({this.url});
 
   /// The url used for this step.
-  final String url;
+  final String? url;
+
+  /// [AuthenticatorStep]s that should have a route defined when using the
+  /// Router API.
+  static Iterable<AuthenticatorStep> get routerSteps =>
+      values.where((step) => step.url != null);
 }
 
 const validInitialAuthenticatorSteps = [
