@@ -34,7 +34,7 @@ void main() {
       switch (state.currentStep) {
         case AuthenticatorStep.signIn:
           return SafeArea(
-            child: AuthenticatorForm(
+            child: SignInForm.custom(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(

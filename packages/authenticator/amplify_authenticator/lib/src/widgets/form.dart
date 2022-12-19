@@ -237,13 +237,17 @@ class AuthenticatorFormState<T extends AuthenticatorForm>
 }
 
 /// {@category Prebuilt Widgets}
+/// A form for registering a new user.
 /// {@template amplify_authenticator.sign_up_form}
-/// A prebuilt form for registering a new user.
-///
-/// To customize the form fields, use [SignUpForm.custom].
 /// {@endtemplate}
 class SignUpForm extends AuthenticatorForm {
   /// {@macro amplify_authenticator.sign_up_form}
+  ///
+  /// A prebuilt [SignUpForm] based off the [AmplifyConfig].
+  ///
+  /// See also:
+  /// - [SignUpForm.withFields]
+  /// - [SignUpForm.custom]
   SignUpForm({
     Key? key,
   })  : _includeDefaultFields = true,
@@ -260,8 +264,14 @@ class SignUpForm extends AuthenticatorForm {
           ],
         );
 
-  /// A custom Sign Up form.
-  SignUpForm.custom({
+  /// {@macro amplify_authenticator.sign_up_form}
+  ///
+  /// A [SignUpForm] with custom form fields.
+  ///
+  /// See also:
+  /// - [SignUpForm()]
+  /// - [SignUpForm.custom]
+  SignUpForm.withFields({
     Key? key,
     required List<SignUpFormField> fields,
   })  : _includeDefaultFields = false,
@@ -273,6 +283,19 @@ class SignUpForm extends AuthenticatorForm {
             SignUpButton(),
           ],
         );
+
+  /// {@macro amplify_authenticator.sign_up_form}
+  ///
+  /// A [SignUpForm] with a custom UI.
+  ///
+  /// See also:
+  /// - [SignUpForm()]
+  /// - [SignUpForm.withFields]
+  SignUpForm.custom({
+    Key? key,
+    required Widget child,
+  })  : _includeDefaultFields = false,
+        super(key: key, formKey: signUpFormKey, child: child);
 
   /// Controls whether the default form fields are included, based on settings in
   /// the Auth plugin configuration.
@@ -391,13 +414,17 @@ class _SignUpFormState extends AuthenticatorFormState<SignUpForm> {
 }
 
 /// {@category Prebuilt Widgets}
+/// A form for signing in an existing user.
 /// {@template amplify_authenticator.sign_in_form}
-/// A prebuilt form for signing in a user.
-///
-/// To customize the form fields, use [SignInForm.custom].
 /// {@endtemplate}
 class SignInForm extends AuthenticatorForm {
   /// {@macro amplify_authenticator.sign_in_form}
+  ///
+  /// A prebuilt [SignInForm] based off the [AmplifyConfig].
+  ///
+  /// See also:
+  /// - [SignInForm.withFields]
+  /// - [SignInForm.custom]
   SignInForm({
     Key? key,
     bool includeDefaultSocialProviders = true,
@@ -415,8 +442,14 @@ class SignInForm extends AuthenticatorForm {
           includeDefaultSocialProviders: includeDefaultSocialProviders,
         );
 
-  /// A custom Sign In form.
-  SignInForm.custom({
+  /// {@macro amplify_authenticator.sign_in_form}
+  ///
+  /// A [SignInForm] with custom fields.
+  ///
+  /// See also:
+  /// - [SignInForm()]
+  /// - [SignInForm.custom]
+  SignInForm.withFields({
     Key? key,
     required List<SignInFormField> fields,
     bool includeDefaultSocialProviders = true,
@@ -430,6 +463,18 @@ class SignInForm extends AuthenticatorForm {
           ],
           includeDefaultSocialProviders: includeDefaultSocialProviders,
         );
+
+  /// {@macro amplify_authenticator.sign_up_form}
+  ///
+  /// A [SignInForm] with a custom UI.
+  ///
+  /// See also:
+  /// - [SignInForm()]
+  /// - [SignInForm.withFields]
+  SignInForm.custom({
+    Key? key,
+    required Widget child,
+  }) : super(key: key, formKey: signInFormKey, child: child);
 
   @override
   AuthenticatorFormState<SignInForm> createState() => _SignInFormState();
@@ -486,12 +531,16 @@ class _SignInFormState extends AuthenticatorFormState<SignInForm> {
 
 /// {@category Prebuilt Widgets}
 /// {@template amplify_authenticator.confirm_sign_up_form}
-/// A prebuilt form for completing the sign up flow with a confirmation code.
-///
-/// To customize the form fields, use [ConfirmSignUpForm.custom].
+/// A form for completing the sign up flow with a confirmation code.
 /// {@endtemplate}
 class ConfirmSignUpForm extends AuthenticatorForm {
   /// {@macro amplify_authenticator.confirm_sign_up_form}
+  ///
+  /// A prebuilt [ConfirmSignUpForm] based off the [AmplifyConfig].
+  ///
+  /// See also:
+  /// - [ConfirmSignUpForm.custom(child: child)]
+  /// - [ConfirmSignUpForm.withFields]
   ConfirmSignUpForm({
     Key? key,
   })  : resendCodeButton = null,
@@ -508,8 +557,14 @@ class ConfirmSignUpForm extends AuthenticatorForm {
           ],
         );
 
-  /// A custom Confirm Sign Up form.
-  ConfirmSignUpForm.custom({
+  /// {@macro amplify_authenticator.confirm_sign_up_form}
+  ///
+  /// A [ConfirmSignUpForm] with custom form fields.
+  ///
+  /// See also:
+  /// - [ConfirmSignUpForm()]
+  /// - [ConfirmSignUpForm.custom]
+  ConfirmSignUpForm.withFields({
     Key? key,
     required List<ConfirmSignUpFormField> fields,
     this.resendCodeButton,
@@ -523,6 +578,19 @@ class ConfirmSignUpForm extends AuthenticatorForm {
           ],
         );
 
+  /// {@macro amplify_authenticator.confirm_sign_up_form}
+  ///
+  /// A [ConfirmSignUpForm] with a custom UI.
+  ///
+  /// See also:
+  /// - [ConfirmSignUpForm()]
+  /// - [ConfirmSignUpForm.withFields]
+  ConfirmSignUpForm.custom({
+    Key? key,
+    required Widget child,
+  })  : resendCodeButton = null,
+        super(key: key, formKey: confirmSignUpFormKey, child: child);
+
   /// Widget to show for resending a verification code.
   ///
   /// Typically a [TextButton].
@@ -535,10 +603,15 @@ class ConfirmSignUpForm extends AuthenticatorForm {
 
 /// {@category Prebuilt Widgets}
 /// {@template amplify_authenticator.confirm_sign_in_custom_auth_form}
-/// A prebuilt form for completing the sign in process with a Custom Auth Flow.
+/// A form for completing the sign in process with a Custom Auth Flow.
 /// {@endtemplate}
 class ConfirmSignInCustomAuthForm extends AuthenticatorForm {
   /// {@macro amplify_authenticator.confirm_sign_in_custom_auth_form}
+  ///
+  /// A prebuilt [ConfirmSignInCustomAuthForm] based on the [AmplifyConfig].
+  ///
+  /// See Also:
+  /// - [ConfirmSignInCustomAuthForm.custom]
   ConfirmSignInCustomAuthForm({Key? key})
       : super._(
           key: key,
@@ -554,6 +627,17 @@ class ConfirmSignInCustomAuthForm extends AuthenticatorForm {
           ],
         );
 
+  /// {@macro amplify_authenticator.confirm_sign_in_custom_auth_form}
+  ///
+  /// A [ConfirmSignUpForm] with a custom UI.
+  ///
+  /// See also:
+  /// - [ConfirmSignUpForm()]
+  ConfirmSignInCustomAuthForm.custom({
+    Key? key,
+    required Widget child,
+  }) : super(key: key, formKey: confirmSignInCustomAuthFormKey, child: child);
+
   @override
   AuthenticatorFormState<ConfirmSignInCustomAuthForm> createState() =>
       AuthenticatorFormState<ConfirmSignInCustomAuthForm>();
@@ -561,10 +645,15 @@ class ConfirmSignInCustomAuthForm extends AuthenticatorForm {
 
 /// {@category Prebuilt Widgets}
 /// {@template amplify_authenticator.confirm_sign_in_mfa_form}
-/// A prebuilt form for completing the sign in process with an MFA code.
+/// A form for completing the sign in process with an MFA code.
 /// {@endtemplate}
 class ConfirmSignInMFAForm extends AuthenticatorForm {
   /// {@macro amplify_authenticator.confirm_sign_in_mfa_form}
+  ///
+  /// A prebuilt [ConfirmSignInMFAForm] based on the [AmplifyConfig].
+  ///
+  /// See also:
+  /// - [ConfirmSignUpForm.custom]
   ConfirmSignInMFAForm({Key? key})
       : super._(
           key: key,
@@ -578,6 +667,17 @@ class ConfirmSignInMFAForm extends AuthenticatorForm {
           ],
         );
 
+  /// {@macro amplify_authenticator.confirm_sign_in_mfa_form}
+  ///
+  /// A [ConfirmSignInMFAForm] with a custom UI.
+  ///
+  /// See also:
+  /// - [ConfirmSignUpForm()]
+  ConfirmSignInMFAForm.custom({
+    Key? key,
+    required Widget child,
+  }) : super(key: key, formKey: confirmSignInMFAFormKey, child: child);
+
   @override
   AuthenticatorFormState<ConfirmSignInMFAForm> createState() =>
       AuthenticatorFormState<ConfirmSignInMFAForm>();
@@ -585,12 +685,16 @@ class ConfirmSignInMFAForm extends AuthenticatorForm {
 
 /// {@category Prebuilt Widgets}
 /// {@template amplify_authenticator.confirm_sign_in_new_password_form}
-/// A prebuilt form for completing the force new password flow.
-///
-/// To customize the form fields, use [ConfirmSignInNewPasswordForm.custom].
+/// A form for completing the force new password flow.
 /// {@endtemplate}
 class ConfirmSignInNewPasswordForm extends AuthenticatorForm {
   /// {@macro amplify_authenticator.confirm_sign_in_new_password_form}
+  ///
+  /// A prebuilt [ConfirmSignInNewPasswordForm] based on the [AmplifyConfig].
+  ///
+  /// See also:
+  /// - [ConfirmSignInNewPasswordForm.withFields]
+  /// = [ConfirmSignInNewPasswordForm.custom]
   ConfirmSignInNewPasswordForm({
     Key? key,
   }) : super._(
@@ -606,8 +710,14 @@ class ConfirmSignInNewPasswordForm extends AuthenticatorForm {
           ],
         );
 
-  /// A custom Confirm Sign In with New Password form.
-  ConfirmSignInNewPasswordForm.custom({
+  /// {@macro amplify_authenticator.confirm_sign_in_new_password_form}
+  ///
+  /// A [ConfirmSignInNewPasswordForm] with custom form fields.
+  ///
+  /// See also:
+  /// - [ConfirmSignInNewPasswordForm()]
+  /// = [ConfirmSignInNewPasswordForm.custom]
+  ConfirmSignInNewPasswordForm.withFields({
     Key? key,
     required List<ConfirmSignInFormField> fields,
   }) : super._(
@@ -620,6 +730,18 @@ class ConfirmSignInNewPasswordForm extends AuthenticatorForm {
           ],
         );
 
+  /// {@macro amplify_authenticator.confirm_sign_in_new_password_form}
+  ///
+  /// A [ConfirmSignInNewPasswordForm] with a custom UI.
+  ///
+  /// See also:
+  /// - [ConfirmSignInNewPasswordForm()]
+  /// = [ConfirmSignInNewPasswordForm.withFields]
+  ConfirmSignInNewPasswordForm.custom({
+    Key? key,
+    required Widget child,
+  }) : super(key: key, formKey: confirmSignInNewPasswordFormKey, child: child);
+
   @override
   AuthenticatorFormState<ConfirmSignInNewPasswordForm> createState() =>
       AuthenticatorFormState<ConfirmSignInNewPasswordForm>();
@@ -627,10 +749,12 @@ class ConfirmSignInNewPasswordForm extends AuthenticatorForm {
 
 /// {@category Prebuilt Widgets}
 /// {@template amplify_authenticator.send_code_form}
-/// A prebuilt form for initiating the reset password flow.
+/// A form for initiating the reset password flow.
 /// {@endtemplate}
 class ResetPasswordForm extends AuthenticatorForm {
   /// {@macro amplify_authenticator.send_code_form}
+  ///
+  /// A prebuilt [ResetPasswordForm] based on the [AmplifyConfig].
   ResetPasswordForm({
     Key? key,
   }) : super._(
@@ -645,6 +769,17 @@ class ResetPasswordForm extends AuthenticatorForm {
           ],
         );
 
+  /// {@macro amplify_authenticator.send_code_form}
+  ///
+  /// A [ResetPasswordForm] with a custom UI.
+  ///
+  /// See also:
+  /// - [ResetPasswordForm()]
+  ResetPasswordForm.custom({
+    Key? key,
+    required Widget child,
+  }) : super(key: key, formKey: resetPasswordFormKey, child: child);
+
   @override
   AuthenticatorFormState<ResetPasswordForm> createState() =>
       AuthenticatorFormState<ResetPasswordForm>();
@@ -652,10 +787,15 @@ class ResetPasswordForm extends AuthenticatorForm {
 
 /// {@category Prebuilt Widgets}
 /// {@template amplify_authenticator.reset_password_form}
-/// A prebuilt form for completing the reset password flow.
+/// A form for completing the reset password flow.
 /// {@endtemplate}
 class ConfirmResetPasswordForm extends AuthenticatorForm {
   /// {@macro amplify_authenticator.reset_password_form}
+  ///
+  /// A prebuilt [ConfirmResetPasswordForm] based on the [AmplifyConfig].
+  ///
+  /// See also:
+  /// - [ConfirmResetPasswordForm.custom]
   ConfirmResetPasswordForm({
     Key? key,
   }) : super._(
@@ -672,6 +812,17 @@ class ConfirmResetPasswordForm extends AuthenticatorForm {
           ],
         );
 
+  /// {@macro amplify_authenticator.reset_password_form}
+  ///
+  /// A [ConfirmResetPasswordForm] with a custom UI.
+  ///
+  /// See also:
+  /// - [ConfirmResetPasswordForm()]
+  ConfirmResetPasswordForm.custom({
+    Key? key,
+    required Widget child,
+  }) : super(key: key, formKey: confirmResetPasswordFormKey, child: child);
+
   @override
   AuthenticatorFormState<ConfirmResetPasswordForm> createState() =>
       AuthenticatorFormState<ConfirmResetPasswordForm>();
@@ -679,10 +830,15 @@ class ConfirmResetPasswordForm extends AuthenticatorForm {
 
 /// {@category Prebuilt Widgets}
 /// {@template amplify_authenticator.verify_user_form}
-/// A prebuilt form for initiating the account recovery attribute verification process.
+/// A form for initiating the account recovery attribute verification process.
 /// {@endtemplate}
 class VerifyUserForm extends AuthenticatorForm {
   /// {@macro amplify_authenticator.verify_user_form}
+  ///
+  /// A prebuilt [VerifyUserForm] based on the [AmplifyConfig].
+  ///
+  /// See also:
+  /// - [VerifyUserForm.custom]
   VerifyUserForm({
     Key? key,
   }) : super._(
@@ -697,6 +853,17 @@ class VerifyUserForm extends AuthenticatorForm {
           ],
         );
 
+  /// {@macro amplify_authenticator.verify_user_form}
+  ///
+  /// A [VerifyUserForm] with a custom UI.
+  ///
+  /// See also:
+  /// - [VerifyUserForm()]
+  VerifyUserForm.custom({
+    Key? key,
+    required Widget child,
+  }) : super(key: key, formKey: verifyUserFormKey, child: child);
+
   @override
   AuthenticatorFormState<VerifyUserForm> createState() =>
       AuthenticatorFormState<VerifyUserForm>();
@@ -708,6 +875,11 @@ class VerifyUserForm extends AuthenticatorForm {
 /// {@endtemplate}
 class ConfirmVerifyUserForm extends AuthenticatorForm {
   /// {@macro amplify_authenticator.confirm_verify_user_form}
+  ///
+  /// A prebuilt [ConfirmVerifyUserForm] based on the [AmplifyConfig].
+  ///
+  /// See also:
+  /// - [ConfirmVerifyUserForm.custom]
   ConfirmVerifyUserForm({
     Key? key,
   }) : super._(
@@ -721,6 +893,17 @@ class ConfirmVerifyUserForm extends AuthenticatorForm {
             SkipVerifyUserButton(),
           ],
         );
+
+  /// {@macro amplify_authenticator.confirm_verify_user_form}
+  ///
+  /// A [ConfirmVerifyUserForm] with a custom UI.
+  ///
+  /// See also:
+  /// - [ConfirmVerifyUserForm()]
+  ConfirmVerifyUserForm.custom({
+    Key? key,
+    required Widget child,
+  }) : super(key: key, formKey: confirmVerifyUserFormKey, child: child);
 
   @override
   AuthenticatorFormState<ConfirmVerifyUserForm> createState() =>
