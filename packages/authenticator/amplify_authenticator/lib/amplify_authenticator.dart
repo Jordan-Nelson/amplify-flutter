@@ -552,9 +552,6 @@ class _AuthenticatorState extends State<Authenticator> {
   final AuthService _authService = AmplifyAuthService();
   late final StateMachineBloc _stateMachineBloc;
   late final AuthenticatorState _authenticatorState;
-  late final StreamSubscription<AuthenticatorException> _exceptionSub;
-  late final StreamSubscription<MessageResolverKey> _infoSub;
-  late final StreamSubscription<AuthState> _successSub;
 
   AmplifyConfig? _config;
   late List<String> _missingConfigValues;
@@ -582,9 +579,6 @@ class _AuthenticatorState extends State<Authenticator> {
 
   @override
   void dispose() {
-    _exceptionSub.cancel();
-    _infoSub.cancel();
-    _successSub.cancel();
     _stateMachineBloc.close();
     super.dispose();
   }
@@ -807,16 +801,7 @@ class AuthenticatedView extends StatelessWidget {
     return FocusTraversalGroup(
       child: _AuthStateBuilder(
         child: child,
-        builder: (state, child) {
-          if (state is AuthenticatedState) {
-            return child;
-          }
-          return SizedBox.expand(
-            child: child is AuthenticatorScreen
-                ? SingleChildScrollView(child: child)
-                : child,
-          );
-        },
+        builder: (state, child) => child,
       ),
     );
   }

@@ -20,12 +20,21 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+class BuildContextFake extends Fake implements BuildContext {}
+
 void main() {
   group('AuthenticatedView', () {
     late AuthenticatorState mockState;
     setUp(() {
       mockState = MockAuthenticatorState();
-      when(mockState.signIn).thenAnswer((_) => Future.value());
+
+      when(() => mockState.signIn(any())).thenAnswer(
+        (_) => Future<void>.value(),
+      );
+    });
+
+    setUpAll(() {
+      registerFallbackValue(BuildContextFake());
     });
 
     /// Completes the sign in form via keyboard events (Tab & Enter).
@@ -57,14 +66,14 @@ void main() {
       // Move focus to first next widget via keyboard (Sign In Button).
       await tester.sendKeyEvent(LogicalKeyboardKey.tab);
 
-      verifyNever(mockState.signIn);
+      verifyNever(() => mockState.signIn(any()));
 
       // Submit form with Enter key.
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
 
       await tester.pump();
 
-      verify(mockState.signIn).called(1);
+      verify(() => mockState.signIn(any())).called(1);
     }
 
     testWidgets(
