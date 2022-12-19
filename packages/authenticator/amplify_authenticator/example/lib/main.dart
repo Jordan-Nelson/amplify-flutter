@@ -103,7 +103,7 @@ class _MyAppState extends State<MyApp> {
       // adding a sign up attribute or adding a custom validator. More complex
       // customizations can be achieved by providing a custom builder method to
       // Authenticator.builder()
-      signUpForm: SignUpForm.custom(
+      signUpForm: SignUpForm.withFields(
         fields: [
           SignUpFormField.username(
             validator: _validateUsername,
