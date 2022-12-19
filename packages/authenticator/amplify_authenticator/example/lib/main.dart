@@ -1,8 +1,5 @@
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_authenticator/amplify_authenticator.dart';
-import 'package:amplify_authenticator_example/customization/authenticator_with_beamer.dart';
-import 'package:amplify_authenticator_example/customization/authenticator_with_go_router.dart';
-import 'package:amplify_authenticator_example/customization/authenticator_with_vrouter.dart';
 import 'package:amplify_authenticator_example/resolvers/localized_button_resolver.dart';
 import 'package:amplify_authenticator_example/resolvers/localized_country_resolver.dart';
 import 'package:amplify_authenticator_example/resolvers/localized_input_resolver.dart';
@@ -73,122 +70,97 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return AuthenticatorWithGoRouter();
+    // First, we set up the custom localizations for Authenticator buttons by
+    // creating a custom resolver which conforms to the `ButtonResolver` class
+    // from the Authenticator library.
+    //
+    // In addition to ButtonResolver, which handles the labels for buttons,
+    // there are also resolvers for input fields, screen titles, and
+    // navigation-related items, all of which can be customized as well. To keep
+    // this demo simple, we only specify a custom button resolver, which
+    // automatically configures the default for the others.
+    const stringResolver = AuthStringResolver(
+      buttons: LocalizedButtonResolver(),
+      countries: LocalizedCountryResolver(),
+      titles: LocalizedTitleResolver(),
+      inputs: LocalizedInputResolver(),
+    );
+
+    // We wrap our MaterialApp in an Authenticator component. This component
+    // handles all the screens and logic whenever the user is signed out. Once
+    // the user is signed in, the Authenticator will use your MaterialApp's
+    // navigator to show the correct screen.
+    return Authenticator(
+      stringResolver: stringResolver,
+      onException: (exception) {
+        print('[ERROR]: $exception');
+      },
+
+      // Next, we create a custom Sign Up form which uses our custom username
+      // validator.
+      //
+      // Providing a custom SignUpForm allows for simple customizations such as
+      // adding a sign up attribute or adding a custom validator. More complex
+      // customizations can be achieved by providing a custom builder method to
+      // Authenticator.builder()
+      signUpForm: SignUpForm.custom(
+        fields: [
+          SignUpFormField.username(
+            validator: _validateUsername,
+          ),
+          SignUpFormField.email(required: true),
+          SignUpFormField.password(),
+          SignUpFormField.passwordConfirmation(),
+          SignUpFormField.address(),
+          SignUpFormField.custom(
+            title: 'Bio',
+            attributeKey: const CognitoUserAttributeKey.custom('bio'),
+          ),
+          SignUpFormField.custom(
+            title: 'Age',
+            attributeKey: const CognitoUserAttributeKey.custom('age'),
+          )
+        ],
+      ),
+
+      // Your MaterialApp should be the child of the Authenticator.
+      child: MaterialApp(
+        title: 'Authenticator Demo',
+        theme: ThemeData.light(),
+        darkTheme: ThemeData.dark(),
+        themeMode: ThemeMode.system,
+        debugShowCheckedModeBanner: false,
+
+        // These lines enable our custom localizations specified in the lib/l10n
+        // directory, which will be used later to customize the values displayed
+        // in the Authenticator component.
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en'), // English
+          Locale('es'), // Spanish
+        ],
+
+        // The Authenticator component must wrap your Navigator component which
+        // can be done using the `builder` method.
+        builder: Authenticator.builder(),
+
+        initialRoute: '/routeA',
+        routes: {
+          '/routeA': (BuildContext context) => const RouteA(),
+          '/routeB': (BuildContext context) => const RouteB(),
+        },
+      ),
+    );
   }
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   // First, we set up the custom localizations for Authenticator buttons by
-  //   // creating a custom resolver which conforms to the `ButtonResolver` class
-  //   // from the Authenticator library.
-  //   //
-  //   // In addition to ButtonResolver, which handles the labels for buttons,
-  //   // there are also resolvers for input fields, screen titles, and
-  //   // navigation-related items, all of which can be customized as well. To keep
-  //   // this demo simple, we only specify a custom button resolver, which
-  //   // automatically configures the default for the others.
-  //   const stringResolver = AuthStringResolver(
-  //     buttons: LocalizedButtonResolver(),
-  //     countries: LocalizedCountryResolver(),
-  //     titles: LocalizedTitleResolver(),
-  //     inputs: LocalizedInputResolver(),
-  //   );
-
-  //   // We wrap our MaterialApp in an Authenticator component. This component
-  //   // handles all the screens and logic whenever the user is signed out. Once
-  //   // the user is signed in, the Authenticator will use your MaterialApp's
-  //   // navigator to show the correct screen.
-  //   return Authenticator(
-  //     stringResolver: stringResolver,
-  //     onException: (exception) {
-  //       print('[ERROR]: $exception');
-  //     },
-
-  //     // Next, we create a custom Sign Up form which uses our custom username
-  //     // validator.
-  //     //
-  //     // Providing a custom SignUpForm allows for simple customizations such as
-  //     // adding a sign up attribute or adding a custom validator. More complex
-  //     // customizations can be achieved by providing a custom builder method to
-  //     // Authenticator.builder()
-  //     signUpForm: SignUpForm.custom(
-  //       fields: [
-  //         SignUpFormField.username(
-  //           validator: _validateUsername,
-  //         ),
-  //         SignUpFormField.email(required: true),
-  //         SignUpFormField.password(),
-  //         SignUpFormField.passwordConfirmation(),
-  //         SignUpFormField.address(),
-  //         SignUpFormField.custom(
-  //           title: 'Bio',
-  //           attributeKey: const CognitoUserAttributeKey.custom('bio'),
-  //         ),
-  //         SignUpFormField.custom(
-  //           title: 'Age',
-  //           attributeKey: const CognitoUserAttributeKey.custom('age'),
-  //         )
-  //       ],
-  //     ),
-
-  //     // Your MaterialApp should be the child of the Authenticator.
-  //     child: MaterialApp(
-  //       title: 'Authenticator Demo',
-  //       theme: ThemeData.light(),
-  //       darkTheme: ThemeData.dark(),
-  //       themeMode: ThemeMode.system,
-  //       debugShowCheckedModeBanner: false,
-
-  //       // These lines enable our custom localizations specified in the lib/l10n
-  //       // directory, which will be used later to customize the values displayed
-  //       // in the Authenticator component.
-  //       localizationsDelegates: const [
-  //         AppLocalizations.delegate,
-  //       ],
-  //       supportedLocales: const [
-  //         Locale('en'), // English
-  //         Locale('es'), // Spanish
-  //       ],
-
-  //       // The Authenticator component must wrap your Navigator component which
-  //       // can be done using the `builder` method.
-  //       builder: Authenticator.builder(),
-
-  //       initialRoute: '/routeA',
-  //       routes: {
-  //         '/routeA': (BuildContext context) => const RouteA(),
-  //         '/routeB': (BuildContext context) => const RouteB(),
-  //       },
-  //     ),
-  //   );
-  // }
-
-  // Some routes in your application may not require authentication.
-  // To handle this use case, instead of providing Authenticator.builder(),
-  // simply wrap the routes that require authentication in an
-  // AuthenticatedView widget.
-  //
-  // uncomment the build method below to try this out
+  /// The Authenticator can be integrated with most routing packages. Below is
+  /// an example using go_router.
 
   // @override
   // Widget build(BuildContext context) {
-  //   return Authenticator(
-  //     child: MaterialApp(
-  //       theme: ThemeData.light(),
-  //       darkTheme: ThemeData.dark(),
-  //       themeMode: ThemeMode.system,
-  //       debugShowCheckedModeBanner: false,
-  //       initialRoute: '/routeA',
-  //       routes: {
-  //         '/routeA': (BuildContext context) => const RouteA(),
-  //         '/routeB': (BuildContext context) {
-  //           return const AuthenticatedView(
-  //             child: RouteB(),
-  //           );
-  //         },
-  //       },
-  //     ),
-  //   );
+  //   return AuthenticatorWithGoRouter();
   // }
 
   // Providing a `builder` argument to Authenticator.builder allows you to
