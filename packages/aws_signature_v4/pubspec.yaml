@@ -19,7 +19,7 @@ dependencies:
   path: ^1.8.0
 
 dev_dependencies:
-  amplify_lints: ">=2.0.3 <2.1.0"
+  amplify_lints: ">=2.0.3 <4.0.0"
   args: ^2.2.0
   build_runner: ^2.0.0
   build_test: ^2.1.5
