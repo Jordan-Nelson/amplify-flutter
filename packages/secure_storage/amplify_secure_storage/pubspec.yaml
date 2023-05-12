@@ -21,7 +21,7 @@ dependencies:
   path_provider_windows: ^2.0.0
 
 dev_dependencies:
-  amplify_lints: ">=2.0.3 <2.1.0"
+  amplify_lints: ">=2.0.3 <4.0.0"
   flutter_test:
     sdk: flutter
   pigeon: ^9.2.4
