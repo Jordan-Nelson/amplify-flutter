@@ -46,6 +46,7 @@ class SocialSignInButtons extends StatelessAuthenticatorComponent {
                   ?.resolve({}) ??
               Theme.of(context).textTheme.labelLarge;
           final tp = TextPainter(
+            textScaleFactor: MediaQuery.of(context).textScaleFactor,
             text: TextSpan(
               text: text,
               style: style,
@@ -169,11 +170,10 @@ class _SocialSignInButtonState
   }
 
   double calculatePadding(BoxConstraints constraints) {
-    final logoWidth = constraints.maxHeight + _spacing;
     final textWidth = widget.maxWidth;
     return max(
       0,
-      (constraints.maxWidth - logoWidth - textWidth) / 2,
+      (constraints.maxWidth - _logoWidth - _spacing - textWidth) / 2,
     );
   }
 
@@ -191,8 +191,8 @@ class _SocialSignInButtonState
   @override
   Widget build(BuildContext context) {
     final resolver = stringResolver.buttons;
-    return SizedBox(
-      height: 40,
+    return Container(
+      constraints: const BoxConstraints(minHeight: 40),
       child: OutlinedButton(
         focusNode: focusNode,
         style: ButtonStyle(
@@ -211,18 +211,28 @@ class _SocialSignInButtonState
                     ? MainAxisAlignment.center
                     : MainAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: widget.provider.padding,
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: icon,
+                  SizedBox(
+                    height: _logoWidth,
+                    child: Padding(
+                      padding: widget.provider.padding,
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: icon,
+                      ),
                     ),
                   ),
                   const SizedBox(width: _spacing),
-                  Text(
-                    resolver.resolve(
-                      context,
-                      ButtonResolverKey.signInWith(widget.provider),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text(
+                        resolver.resolve(
+                          context,
+                          ButtonResolverKey.signInWith(widget.provider),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
                 ],
@@ -243,3 +253,5 @@ extension on AuthProvider {
     return EdgeInsets.zero;
   }
 }
+
+const _logoWidth = 40.0;
