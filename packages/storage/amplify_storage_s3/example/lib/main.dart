@@ -129,8 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // upload a file to the S3 bucket
   Future<void> _uploadFile() async {
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'png'],
+      type: FileType.image,
       withReadStream: true,
       withData: false,
     );
@@ -148,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
           platformFile.readStream!,
           size: platformFile.size,
         ),
-        path: StoragePath.fromString('/public/${platformFile.name}'),
+        path: const StoragePath.fromString('//public/foo.png'),
         onProgress: (p) =>
             _logger.debug('Uploading: ${p.transferredBytes}/${p.totalBytes}'),
       ).result;
@@ -180,9 +179,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final documentsDir = await getApplicationDocumentsDirectory();
     final filepath = '${documentsDir.path}/$key';
     try {
-      await Amplify.Storage.downloadFile(
-        key: key,
-        localFile: AWSFile.fromPath(filepath),
+      await Amplify.Storage.downloadData(
+        key: 'foo-bar.txt',
+        options: const StorageDownloadDataOptions(
+          accessLevel: StorageAccessLevel.protected,
+        ),
+        // localFile: AWSFile.fromPath(filepath),
         onProgress: (p0) => _logger
             .debug('Progress: ${(p0.transferredBytes / p0.totalBytes) * 100}%'),
       ).result;
@@ -213,10 +215,13 @@ class _HomeScreenState extends State<HomeScreen> {
     required StorageAccessLevel accessLevel,
   }) async {
     try {
-      await Amplify.Storage.remove(
-        key: key,
-        options: StorageRemoveOptions(accessLevel: accessLevel),
+      final res = await Amplify.Storage.removeMany(
+        paths: [
+          const StoragePath.fromString('/public/foo.png'),
+        ],
       ).result;
+      print(res.removedItems);
+      print((res as S3RemoveManyResult).removeErrors);
       setState(() {
         // set the imageUrl to empty if the deleted file is the one being displayed
         imageUrl = '';
