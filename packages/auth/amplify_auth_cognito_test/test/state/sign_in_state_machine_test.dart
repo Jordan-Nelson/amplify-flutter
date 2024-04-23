@@ -234,54 +234,6 @@ void main() {
           ]),
         );
       });
-
-      test('customAuth uses old behavior', () async {
-        stateMachine
-            .dispatch(
-              ConfigurationEvent.configure(userPoolOnlyConfig),
-            )
-            .ignore();
-        await expectLater(
-          stateMachine.stream.whereType<ConfigurationState>().firstWhere(
-                (event) => event is Configured || event is ConfigureFailure,
-              ),
-          completion(isA<Configured>()),
-        );
-
-        final mockClient = MockCognitoIdentityProviderClient(
-          initiateAuth: expectAsync1(
-            (_) async => cognito_idp.InitiateAuthResponse(
-              authenticationResult: cognito_idp.AuthenticationResultType(
-                accessToken: accessToken.raw,
-                refreshToken: refreshToken,
-                idToken: idToken.raw,
-              ),
-            ),
-          ),
-        );
-        stateMachine
-          ..addInstance<cognito_idp.CognitoIdentityProviderClient>(mockClient)
-          ..dispatch(
-            SignInEvent.initiate(
-              // ignore: deprecated_member_use
-              authFlowType: AuthenticationFlowType.customAuth,
-              parameters: SignInParameters(
-                (p) => p
-                  ..username = 'username'
-                  ..password = 'password',
-              ),
-            ),
-          ).ignore();
-
-        final signInStateMachine = stateMachine.expect(SignInStateMachine.type);
-        expect(
-          signInStateMachine.stream,
-          emitsInOrder([
-            isA<SignInInitiating>(),
-            isA<SignInSuccess>(),
-          ]),
-        );
-      });
     });
 
     group('device tracking', () {

@@ -551,8 +551,6 @@ final class SignInStateMachine
                 'Do not include a password in your call to Amplify.Auth.signIn',
           );
         }
-      // ignore: deprecated_member_use
-      case AuthenticationFlowType.customAuth:
       default:
         break;
     }
