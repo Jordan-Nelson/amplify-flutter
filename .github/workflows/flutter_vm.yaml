@@ -42,7 +42,7 @@ jobs:
         run: git submodule update --init
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@48cafc24713cca54bbe03cdc3a423187d413aafa # 2.10.0
+        uses: subosito/flutter-action@44ac965b96f18d999802d4b807e3256d5a3f9fa1 # 2.16.0
         with:
           cache: true
           channel: ${{ matrix.channel }}
