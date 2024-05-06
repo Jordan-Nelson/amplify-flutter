@@ -135,6 +135,16 @@ on:
   schedule:
     - cron: "0 13 * * *" # Everyday at 06:00 PST
   workflow_dispatch:
+    inputs:
+      channel: 
+        description: 'The Flutter channel'
+        required: true
+        default: 'stable'
+        type: choice
+        options:
+        - stable
+        - beta
+
 defaults:
   run:
     shell: bash
