@@ -35,7 +35,7 @@ We follow [semantic versioning](https://dart.dev/tools/pub/versioning#semantic-v
 
 When Amplify adds a new enumeration entry or sealed class subtype, we will publish a new **minor** version of the library.
 
-Applications that use a `switch` statement to evaluate all members of an enumerated type can add a `default` clause to prevent 
+Applications that use a `switch` statement to evaluate all members of an enumerated type can add a `default` clause to prevent
 new cases from causing compile warnings or errors.
 
 #### Semantic versioning and dependencies update
@@ -44,15 +44,15 @@ We follow [semantic versioning for updating our dependencies](https://semver.org
 
 ## Category / Platform Support
 
-| Category       | Android |  iOS  |  Web  | Windows | MacOS | Linux |
-| -------------- | :-----: | :---: | :---: | :-----: | :---: | :---: |
-| Analytics      |    ✅    |   ✅   |   ✅   |    ✅    |   ✅   |   ✅   |
-| API (REST)     |    ✅    |   ✅   |   ✅   |    ✅    |   ✅   |   ✅   |
-| API (GraphQL)  |    ✅    |   ✅   |   ✅   |    ✅    |   ✅   |   ✅   |
-| Authentication |    ✅    |   ✅   |   ✅   |    ✅    |   ✅   |   ✅   |
-| DataStore      |    ✅    |   ✅   |   🔴   |    🔴    |   🔴   |   🔴   |
-| Storage        |    ✅    |   ✅   |   ✅   |    ✅    |   ✅   |   ✅   |
-| Notifications  |    ✅    |   ✅   |   🔴   |    🔴    |   🔴   |   🔴   |
+| Category       | Android | iOS | Web | Windows | MacOS | Linux |
+| -------------- | :-----: | :-: | :-: | :-----: | :---: | :---: |
+| Analytics      |   ✅    | ✅  | ✅  |   ✅    |  ✅   |  ✅   |
+| API (REST)     |   ✅    | ✅  | ✅  |   ✅    |  ✅   |  ✅   |
+| API (GraphQL)  |   ✅    | ✅  | ✅  |   ✅    |  ✅   |  ✅   |
+| Authentication |   ✅    | ✅  | ✅  |   ✅    |  ✅   |  ✅   |
+| DataStore      |   ✅    | ✅  | 🔴  |   🔴    |  🔴   |  🔴   |
+| Storage        |   ✅    | ✅  | ✅  |   ✅    |  ✅   |  ✅   |
+| Notifications  |   ✅    | ✅  | 🔴  |   🔴    |  🔴   |  🔴   |
 
 ## Documentation
 
@@ -119,9 +119,9 @@ https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html
 
 ```yaml
 dependencies:
-  amplify_auth_cognito: ^1.0.0
-  amplify_authenticator: ^1.0.0
-  amplify_flutter: ^1.0.0
+  amplify_auth_cognito: ^2.0.0
+  amplify_authenticator: ^2.0.0
+  amplify_flutter: ^2.0.0
   flutter:
     sdk: flutter
 ```
