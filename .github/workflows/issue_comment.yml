@@ -1,0 +1,9 @@
+name: Issue Comment
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  adjust-labels:
+    uses: aws-amplify/amplify-android/.github/workflows/issue_comment.yml@9388e099a615f31705f4daaad4e4209e944f5fe2
